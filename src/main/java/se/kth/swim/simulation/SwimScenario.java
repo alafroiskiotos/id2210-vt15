@@ -100,23 +100,19 @@ public class SwimScenario {
 
     static Operation1<StartAggregatorCmd, Integer> startAggregatorOp = new Operation1<StartAggregatorCmd, Integer>() {
 
-        @Override
         public StartAggregatorCmd generate(final Integer nodeId) {
             return new StartAggregatorCmd<AggregatorComp, NatedAddress>() {
                 private NatedAddress aggregatorAddress;
 
-                @Override
                 public Class getNodeComponentDefinition() {
                     return AggregatorComp.class;
                 }
 
-                @Override
                 public AggregatorComp.AggregatorInit getNodeComponentInit() {
                     aggregatorAddress = new BasicNatedAddress(new BasicAddress(localHost, 23456, nodeId));
                     return new AggregatorComp.AggregatorInit(aggregatorAddress);
                 }
 
-                @Override
                 public NatedAddress getAddress() {
                     return aggregatorAddress;
                 }
@@ -127,17 +123,14 @@ public class SwimScenario {
 
     static Operation1<StartNodeCmd, Integer> startNodeOp = new Operation1<StartNodeCmd, Integer>() {
 
-        @Override
         public StartNodeCmd generate(final Integer nodeId) {
             return new StartNodeCmd<HostComp, NatedAddress>() {
                 private NatedAddress nodeAddress;
 
-                @Override
                 public Class getNodeComponentDefinition() {
                     return HostComp.class;
                 }
 
-                @Override
                 public HostComp.HostInit getNodeComponentInit(NatedAddress aggregatorServer, Set<NatedAddress> bootstrapNodes) {
                     if (nodeId % 2 == 0) {
                         //open address
@@ -154,17 +147,14 @@ public class SwimScenario {
                     return new HostComp.HostInit(nodeAddress, bootstrapNodes, aggregatorServer, nodeSeed);
                 }
 
-                @Override
                 public Integer getNodeId() {
                     return nodeId;
                 }
 
-                @Override
                 public NatedAddress getAddress() {
                     return nodeAddress;
                 }
 
-                @Override
                 public int bootstrapSize() {
                     return 5;
                 }
@@ -199,7 +189,6 @@ public class SwimScenario {
     //a disconnected node will not be able to send or receive messages
     static Operation1<ChangeNetworkModelCmd, Integer> disconnectedNodesNMOp = new Operation1<ChangeNetworkModelCmd, Integer>() {
 
-        @Override
         public ChangeNetworkModelCmd generate(Integer setIndex) {
             NetworkModel baseNetworkModel = new UniformRandomModel(50, 500);
             NetworkModel compositeNetworkModel = new DisconnectedNodesNetworkModel(setIndex, baseNetworkModel, disconnectedNodesSets.get(setIndex));
@@ -209,7 +198,6 @@ public class SwimScenario {
 
     static Operation1<ChangeNetworkModelCmd, Integer> deadLinksNMOp = new Operation1<ChangeNetworkModelCmd, Integer>() {
 
-        @Override
         public ChangeNetworkModelCmd generate(Integer setIndex) {
             NetworkModel baseNetworkModel = new UniformRandomModel(50, 500);
             NetworkModel compositeNetworkModel = new DeadLinkNetworkModel(setIndex, baseNetworkModel, deadLinksSets.get(setIndex));
@@ -222,7 +210,6 @@ public class SwimScenario {
         public SimulationResult generate() {
             return new SimulationResult() {
 
-                @Override
                 public void setSimulationResult(OperationCmd.ValidationException failureCause) {
                     SwimSimulationResult.failureCause = failureCause;
                 }
