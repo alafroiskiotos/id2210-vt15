@@ -23,6 +23,8 @@ import java.util.Random;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.kth.swim.croupier.CroupierPort;
+import se.kth.swim.croupier.msg.CroupierSample;
 import se.kth.swim.msg.net.NetMsg;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
@@ -46,6 +48,7 @@ public class NatTraversalComp extends ComponentDefinition {
     private static final Logger log = LoggerFactory.getLogger(NatTraversalComp.class);
     private Negative<Network> local = provides(Network.class);
     private Positive<Network> network = requires(Network.class);
+    private Positive<CroupierPort> croupier = requires(CroupierPort.class);
 
     private final NatedAddress selfAddress;
     private final Random rand;
@@ -59,6 +62,7 @@ public class NatTraversalComp extends ComponentDefinition {
         subscribe(handleStop, control);
         subscribe(handleIncomingMsg, network);
         subscribe(handleOutgoingMsg, local);
+        subscribe(handleCroupierSample, croupier);
     }
 
     private Handler<Start> handleStart = new Handler<Start>() {
@@ -138,6 +142,14 @@ public class NatTraversalComp extends ComponentDefinition {
             }
         }
 
+    };
+    
+    private Handler handleCroupierSample = new Handler<CroupierSample>() {
+        @Override
+        public void handle(CroupierSample event) {
+            log.info("{} croupier public nodes:{}", selfAddress.getBaseAdr(), event.publicSample);
+            //use this to change parent in case it died
+        }
     };
     
     private NatedAddress randomNode(Set<NatedAddress> nodes) {
