@@ -43,7 +43,7 @@ public class CroupierView<C extends Object> {
     private final Random rand;
 
     private Comparator<CroupierViewEntry> comparatorByAge = new Comparator<CroupierViewEntry>() {
-        @Override
+        
         public int compare(CroupierViewEntry o1, CroupierViewEntry o2) {
             if (o1.getDescriptor().getAge() > o2.getDescriptor().getAge()) {
                 return 1;

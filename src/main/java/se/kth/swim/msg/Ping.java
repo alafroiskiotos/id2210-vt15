@@ -23,4 +23,13 @@ package se.kth.swim.msg;
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class Ping {
+	private String testField;
+	
+	public Ping(String testField) {
+		this.testField = testField;
+	}
+	
+	public String getTestField() {
+		return testField;
+	}
 }

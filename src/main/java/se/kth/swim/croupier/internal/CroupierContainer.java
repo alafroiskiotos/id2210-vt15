@@ -41,18 +41,15 @@ public class CroupierContainer<C extends Object> implements Container<NatedAddre
     public CroupierContainer(NatedAddress src, C content) {
         this(src, content, 0);
     }
-
-    @Override
+ 
     public int getAge() {
         return age;
     }
 
-    @Override
     public NatedAddress getSource() {
         return src;
     }
 
-    @Override
     public C getContent() {
         return content;
     }

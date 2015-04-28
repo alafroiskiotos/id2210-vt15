@@ -20,10 +20,13 @@ package se.kth.swim;
 
 import java.util.Set;
 import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import se.kth.swim.msg.Status;
 import se.kth.swim.msg.net.NetPing;
+import se.kth.swim.msg.net.NetPong;
 import se.kth.swim.msg.net.NetStatus;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
@@ -43,144 +46,165 @@ import se.sics.p2ptoolbox.util.network.NatedAddress;
  */
 public class SwimComp extends ComponentDefinition {
 
-    private static final Logger log = LoggerFactory.getLogger(SwimComp.class);
-    private Positive<Network> network = requires(Network.class);
-    private Positive<Timer> timer = requires(Timer.class);
+	private static final Logger log = LoggerFactory.getLogger(SwimComp.class);
+	private Positive<Network> network = requires(Network.class);
+	private Positive<Timer> timer = requires(Timer.class);
 
-    private final NatedAddress selfAddress;
-    private final Set<NatedAddress> bootstrapNodes;
-    private final NatedAddress aggregatorAddress;
+	private final NatedAddress selfAddress;
+	private final Set<NatedAddress> bootstrapNodes;
+	private final NatedAddress aggregatorAddress;
 
-    private UUID pingTimeoutId;
-    private UUID statusTimeoutId;
+	private UUID pingTimeoutId;
+	private UUID statusTimeoutId;
 
-    private int receivedPings = 0;
+	private int receivedPings = 0;
 
-    public SwimComp(SwimInit init) {
-        this.selfAddress = init.selfAddress;
-        log.info("{} initiating...", selfAddress);
-        this.bootstrapNodes = init.bootstrapNodes;
-        this.aggregatorAddress = init.aggregatorAddress;
+	public SwimComp(SwimInit init) {
+		this.selfAddress = init.selfAddress;
+		log.info("{} initiating...", selfAddress);
+		this.bootstrapNodes = init.bootstrapNodes;
+		this.aggregatorAddress = init.aggregatorAddress;
 
-        subscribe(handleStart, control);
-        subscribe(handleStop, control);
-        subscribe(handlePing, network);
-        subscribe(handlePingTimeout, timer);
-        subscribe(handleStatusTimeout, timer);
-    }
+		subscribe(handleStart, control);
+		subscribe(handleStop, control);
+		subscribe(handlePing, network);
+		subscribe(handlePingTimeout, timer);
+		subscribe(handleStatusTimeout, timer);
+		subscribe(handlePong, network);
+	}
 
-    private Handler<Start> handleStart = new Handler<Start>() {
+	private Handler<Start> handleStart = new Handler<Start>() {
 
-        @Override
-        public void handle(Start event) {
-            log.info("{} starting...", new Object[]{selfAddress.getId()});
+		@Override
+		public void handle(Start event) {
+			log.info("{} starting...", new Object[] { selfAddress.getId() });
 
-            if (!bootstrapNodes.isEmpty()) {
-                schedulePeriodicPing();
-            }
-            schedulePeriodicStatus();
-        }
+			if (!bootstrapNodes.isEmpty()) {
+				schedulePeriodicPing();
+			}
+			schedulePeriodicStatus();
+		}
 
-    };
-    private Handler<Stop> handleStop = new Handler<Stop>() {
+	};
+	private Handler<Stop> handleStop = new Handler<Stop>() {
 
-        @Override
-        public void handle(Stop event) {
-            log.info("{} stopping...", new Object[]{selfAddress.getId()});
-            if (pingTimeoutId != null) {
-                cancelPeriodicPing();
-            }
-            if (statusTimeoutId != null) {
-                cancelPeriodicStatus();
-            }
-        }
+		@Override
+		public void handle(Stop event) {
+			log.info("{} stopping...", new Object[] { selfAddress.getId() });
+			if (pingTimeoutId != null) {
+				cancelPeriodicPing();
+			}
+			if (statusTimeoutId != null) {
+				cancelPeriodicStatus();
+			}
+		}
 
-    };
+	};
 
-    private Handler<NetPing> handlePing = new Handler<NetPing>() {
+	private Handler<NetPing> handlePing = new Handler<NetPing>() {
 
-        @Override
-        public void handle(NetPing event) {
-            log.info("{} received ping from:{}", new Object[]{selfAddress.getId(), event.getHeader().getSource()});
-            receivedPings++;
-        }
+		@Override
+		public void handle(NetPing event) {
+			log.info("{} received PING from:{}, {}",
+					new Object[] { selfAddress.getId(),
+							event.getHeader().getSource(),
+							event.getContent().getTestField() });
+			receivedPings++;
 
-    };
+			// Send PONG
+			trigger(new NetPong(selfAddress, event.getSource()), network);
+		}
 
-    private Handler<PingTimeout> handlePingTimeout = new Handler<PingTimeout>() {
+	};
 
-        @Override
-        public void handle(PingTimeout event) {
-            for (NatedAddress partnerAddress : bootstrapNodes) {
-                log.info("{} sending ping to partner:{}", new Object[]{selfAddress.getId(), partnerAddress});
-                trigger(new NetPing(selfAddress, partnerAddress), network);
-            }
-        }
+	private Handler<NetPong> handlePong = new Handler<NetPong>() {
 
-    };
+		@Override
+		public void handle(NetPong event) {
+			log.info("{} received PONG from: {}", selfAddress.getId(),
+					event.getSource());
+		}
+	};
 
-    private Handler<StatusTimeout> handleStatusTimeout = new Handler<StatusTimeout>() {
+	private Handler<PingTimeout> handlePingTimeout = new Handler<PingTimeout>() {
 
-        @Override
-        public void handle(StatusTimeout event) {
-            log.info("{} sending status to aggregator:{}", new Object[]{selfAddress.getId(), aggregatorAddress});
-            trigger(new NetStatus(selfAddress, aggregatorAddress, new Status(receivedPings)), network);
-        }
+		@Override
+		public void handle(PingTimeout event) {
+			for (NatedAddress partnerAddress : bootstrapNodes) {
+				log.info("{} sending ping to partner:{}", new Object[] {
+						selfAddress.getId(), partnerAddress });
+				trigger(new NetPing(selfAddress, partnerAddress, "lalakoko"),
+						network);
+			}
+		}
 
-    };
+	};
 
-    private void schedulePeriodicPing() {
-        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(1000, 1000);
-        PingTimeout sc = new PingTimeout(spt);
-        spt.setTimeoutEvent(sc);
-        pingTimeoutId = sc.getTimeoutId();
-        trigger(spt, timer);
-    }
+	private Handler<StatusTimeout> handleStatusTimeout = new Handler<StatusTimeout>() {
 
-    private void cancelPeriodicPing() {
-        CancelTimeout cpt = new CancelTimeout(pingTimeoutId);
-        trigger(cpt, timer);
-        pingTimeoutId = null;
-    }
+		@Override
+		public void handle(StatusTimeout event) {
+			log.info("{} sending status to aggregator:{}", new Object[] {
+					selfAddress.getId(), aggregatorAddress });
+			trigger(new NetStatus(selfAddress, aggregatorAddress, new Status(
+					receivedPings)), network);
+		}
 
-    private void schedulePeriodicStatus() {
-        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(10000, 10000);
-        StatusTimeout sc = new StatusTimeout(spt);
-        spt.setTimeoutEvent(sc);
-        statusTimeoutId = sc.getTimeoutId();
-        trigger(spt, timer);
-    }
+	};
 
-    private void cancelPeriodicStatus() {
-        CancelTimeout cpt = new CancelTimeout(statusTimeoutId);
-        trigger(cpt, timer);
-        statusTimeoutId = null;
-    }
+	private void schedulePeriodicPing() {
+		SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(1000, 1000);
+		PingTimeout sc = new PingTimeout(spt);
+		spt.setTimeoutEvent(sc);
+		pingTimeoutId = sc.getTimeoutId();
+		trigger(spt, timer);
+	}
 
-    public static class SwimInit extends Init<SwimComp> {
+	private void cancelPeriodicPing() {
+		CancelTimeout cpt = new CancelTimeout(pingTimeoutId);
+		trigger(cpt, timer);
+		pingTimeoutId = null;
+	}
 
-        public final NatedAddress selfAddress;
-        public final Set<NatedAddress> bootstrapNodes;
-        public final NatedAddress aggregatorAddress;
+	private void schedulePeriodicStatus() {
+		SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(10000, 10000);
+		StatusTimeout sc = new StatusTimeout(spt);
+		spt.setTimeoutEvent(sc);
+		statusTimeoutId = sc.getTimeoutId();
+		trigger(spt, timer);
+	}
 
-        public SwimInit(NatedAddress selfAddress, Set<NatedAddress> bootstrapNodes, NatedAddress aggregatorAddress) {
-            this.selfAddress = selfAddress;
-            this.bootstrapNodes = bootstrapNodes;
-            this.aggregatorAddress = aggregatorAddress;
-        }
-    }
+	private void cancelPeriodicStatus() {
+		CancelTimeout cpt = new CancelTimeout(statusTimeoutId);
+		trigger(cpt, timer);
+		statusTimeoutId = null;
+	}
 
-    private static class StatusTimeout extends Timeout {
+	public static class SwimInit extends Init<SwimComp> {
 
-        public StatusTimeout(SchedulePeriodicTimeout request) {
-            super(request);
-        }
-    }
+		public final NatedAddress selfAddress;
+		public final Set<NatedAddress> bootstrapNodes;
+		public final NatedAddress aggregatorAddress;
 
-    private static class PingTimeout extends Timeout {
+		public SwimInit(NatedAddress selfAddress,
+				Set<NatedAddress> bootstrapNodes, NatedAddress aggregatorAddress) {
+			this.selfAddress = selfAddress;
+			this.bootstrapNodes = bootstrapNodes;
+			this.aggregatorAddress = aggregatorAddress;
+		}
+	}
 
-        public PingTimeout(SchedulePeriodicTimeout request) {
-            super(request);
-        }
-    }
+	private static class StatusTimeout extends Timeout {
+
+		public StatusTimeout(SchedulePeriodicTimeout request) {
+			super(request);
+		}
+	}
+
+	private static class PingTimeout extends Timeout {
+
+		public PingTimeout(SchedulePeriodicTimeout request) {
+			super(request);
+		}
+	}
 }

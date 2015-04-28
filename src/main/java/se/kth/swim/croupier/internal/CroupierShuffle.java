@@ -42,7 +42,6 @@ public class CroupierShuffle {
             }
         }
         
-        @Override
         public final UUID getId() {
             return id;
         }
