@@ -18,6 +18,10 @@
  */
 package se.kth.swim;
 
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
@@ -28,6 +32,7 @@ import se.kth.swim.msg.Status;
 import se.kth.swim.msg.net.NetPing;
 import se.kth.swim.msg.net.NetPong;
 import se.kth.swim.msg.net.NetStatus;
+import se.kth.swim.simulation.SwimScenario;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
@@ -39,6 +44,7 @@ import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
+import se.sics.p2ptoolbox.simulator.run.LauncherComp;
 import se.sics.p2ptoolbox.util.network.NatedAddress;
 
 /**
@@ -47,23 +53,35 @@ import se.sics.p2ptoolbox.util.network.NatedAddress;
 public class SwimComp extends ComponentDefinition {
 
 	private static final Logger log = LoggerFactory.getLogger(SwimComp.class);
+	// λlogn times
+	private static final Integer INFECT_FACTOR = 3;
+	private static final Integer MEMBERSHIP_SIZE = 10;
 	private Positive<Network> network = requires(Network.class);
 	private Positive<Timer> timer = requires(Timer.class);
 
 	private final NatedAddress selfAddress;
 	private final Set<NatedAddress> bootstrapNodes;
 	private final NatedAddress aggregatorAddress;
+	private FifoQueue<ViewNode> membershipList;
 
 	private UUID pingTimeoutId;
 	private UUID statusTimeoutId;
 
 	private int receivedPings = 0;
+	
+	public enum NodeStatus {
+		NEW,
+		DEAD,
+		SUSPECTED,
+		ALIVE
+	}
 
 	public SwimComp(SwimInit init) {
 		this.selfAddress = init.selfAddress;
 		log.info("{} initiating...", selfAddress);
 		this.bootstrapNodes = init.bootstrapNodes;
 		this.aggregatorAddress = init.aggregatorAddress;
+		this.membershipList = new FifoQueue<ViewNode>(MEMBERSHIP_SIZE);
 
 		subscribe(handleStart, control);
 		subscribe(handleStop, control);
@@ -80,6 +98,12 @@ public class SwimComp extends ComponentDefinition {
 			log.info("{} starting...", new Object[] { selfAddress.getId() });
 
 			if (!bootstrapNodes.isEmpty()) {
+				
+				// Add bootstrap nodes to local membership list
+				for(NatedAddress node : bootstrapNodes) {
+					membershipList.addElement(new ViewNode(node));
+					log.info("{} my bootstrap node: {}", selfAddress.getId(), node);
+				}
 				schedulePeriodicPing();
 			}
 			schedulePeriodicStatus();
@@ -111,8 +135,8 @@ public class SwimComp extends ComponentDefinition {
 							event.getContent().getTestField() });
 			receivedPings++;
 
-			// Send PONG
-			trigger(new NetPong(selfAddress, event.getSource()), network);
+			// Send PONG - Dummy LinkedList
+			trigger(new NetPong(selfAddress, event.getSource(), new LinkedList<ViewNode>()), network);
 		}
 
 	};
@@ -130,12 +154,20 @@ public class SwimComp extends ComponentDefinition {
 
 		@Override
 		public void handle(PingTimeout event) {
-			for (NatedAddress partnerAddress : bootstrapNodes) {
+			/*for (NatedAddress partnerAddress : bootstrapNodes) {
 				log.info("{} sending ping to partner:{}", new Object[] {
 						selfAddress.getId(), partnerAddress });
 				trigger(new NetPing(selfAddress, partnerAddress, "lalakoko"),
 						network);
-			}
+			}*/
+			
+			// Pick random peer to ping
+			// TODO round-robin selection
+			Random rand = LauncherComp.scenario.getRandom();
+			Integer randInt = rand.nextInt(membershipList.getSize());
+			ViewNode peer = membershipList.getElement(randInt);
+			log.info("{} sending PING to node: {}", new Object[]{selfAddress.getId(), peer.getPeer()});
+			trigger(new NetPing(selfAddress, peer.getPeer(), "lalakoko"), network);
 		}
 
 	};
