@@ -59,7 +59,6 @@ public class SwimComp extends ComponentDefinition {
 	private final NatedAddress selfAddress;
 	private final Set<NatedAddress> bootstrapNodes;
 	private final NatedAddress aggregatorAddress;
-	private FifoQueue<ViewNode> membershipList;
 
 	private UUID pingTimeoutId;
 	private UUID statusTimeoutId;
@@ -78,7 +77,6 @@ public class SwimComp extends ComponentDefinition {
 		log.info("{} initiating...", selfAddress);
 		this.bootstrapNodes = init.bootstrapNodes;
 		this.aggregatorAddress = init.aggregatorAddress;
-		this.membershipList = new FifoQueue<ViewNode>(MEMBERSHIP_SIZE);
 
 		subscribe(handleStart, control);
 		subscribe(handleStop, control);
@@ -97,10 +95,10 @@ public class SwimComp extends ComponentDefinition {
 			if (!bootstrapNodes.isEmpty()) {
 				
 				// Add bootstrap nodes to local membership list
-				for(NatedAddress node : bootstrapNodes) {
-					membershipList.push(new ViewNode(node));
-					log.info("{} my bootstrap node: {}", selfAddress.getId(), node);
-				}
+//				for(NatedAddress node : bootstrapNodes) {
+//					membershipList.push(new ViewNode(node));
+//					log.info("{} my bootstrap node: {}", selfAddress.getId(), node);
+//				}
 				schedulePeriodicPing();
 			}
 			schedulePeriodicStatus();
@@ -133,7 +131,7 @@ public class SwimComp extends ComponentDefinition {
 			receivedPings++;
 
 			// Send PONG - Dummy LinkedList
-			trigger(new NetPong(selfAddress, event.getSource(), new LinkedList<ViewNode>()), network);
+			//trigger(new NetPong(selfAddress, event.getSource(), new LinkedList<ViewNode>()), network);
 		}
 
 	};
@@ -161,10 +159,10 @@ public class SwimComp extends ComponentDefinition {
 			// Pick random peer to ping
 			// TODO round-robin selection
 			Random rand = LauncherComp.scenario.getRandom();
-			Integer randInt = rand.nextInt(membershipList.getSize());
-			ViewNode peer = membershipList.getElement(randInt);
-			log.info("{} sending PING to node: {}", new Object[]{selfAddress.getId(), peer.getPeer()});
-			trigger(new NetPing(selfAddress, peer.getPeer(), "lalakoko"), network);
+//			Integer randInt = rand.nextInt(membershipList.getSize());
+//			ViewNode peer = membershipList.getElement(randInt);
+//			log.info("{} sending PING to node: {}", new Object[]{selfAddress.getId(), peer.getPeer()});
+//			trigger(new NetPing(selfAddress, peer.getPeer(), "lalakoko"), network);
 		}
 
 	};

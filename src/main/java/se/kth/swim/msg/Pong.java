@@ -1,18 +1,16 @@
 package se.kth.swim.msg;
 
-import java.util.List;
-import java.util.Set;
-
-import se.kth.swim.ViewNode;
+import se.kth.swim.MembershipList;
+import se.kth.swim.Peer;
 
 public class Pong {
-	private final List<ViewNode> view;
+	private final MembershipList<Peer> view;
 	
-	public Pong(List<ViewNode> view) {
+	public Pong(MembershipList<Peer> view) {
 		this.view = view;
 	}
 	
-	public List<ViewNode> getView() {
+	public MembershipList<Peer> getView() {
 		return view;
 	}
 }
