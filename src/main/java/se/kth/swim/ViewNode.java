@@ -19,7 +19,7 @@ public class ViewNode implements Comparable<ViewNode>{
 	public Integer getInfectedTimes() {
 		return infectedTimes;
 	}
-	
+
 	public void increaseInfectedTimes() {
 		infectedTimes++;
 	}

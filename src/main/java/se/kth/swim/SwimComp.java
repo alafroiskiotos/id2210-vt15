@@ -18,9 +18,7 @@
  */
 package se.kth.swim;
 
-import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -32,7 +30,6 @@ import se.kth.swim.msg.Status;
 import se.kth.swim.msg.net.NetPing;
 import se.kth.swim.msg.net.NetPong;
 import se.kth.swim.msg.net.NetStatus;
-import se.kth.swim.simulation.SwimScenario;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
@@ -101,7 +98,7 @@ public class SwimComp extends ComponentDefinition {
 				
 				// Add bootstrap nodes to local membership list
 				for(NatedAddress node : bootstrapNodes) {
-					membershipList.addElement(new ViewNode(node));
+					membershipList.push(new ViewNode(node));
 					log.info("{} my bootstrap node: {}", selfAddress.getId(), node);
 				}
 				schedulePeriodicPing();

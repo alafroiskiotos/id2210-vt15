@@ -13,7 +13,7 @@ public class FifoQueue<V> {
 		queue = new LinkedList<V>();
 	}
 	
-	public void addElement(V element) {
+	public void push(V element) {
 		if (queue.size() < size) {
 			queue.add(0, element);
 		} else {
