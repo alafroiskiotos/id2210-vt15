@@ -18,6 +18,8 @@
  */
 package se.kth.swim.msg.net;
 
+import java.util.UUID;
+
 import se.kth.swim.msg.Ping;
 import se.sics.kompics.network.Header;
 import se.sics.p2ptoolbox.util.network.NatedAddress;
@@ -27,8 +29,8 @@ import se.sics.p2ptoolbox.util.network.NatedAddress;
  */
 public class NetPing extends NetMsg<Ping> {
 
-    public NetPing(NatedAddress src, NatedAddress dst, String testField) {
-        super(src, dst, new Ping(testField));
+    public NetPing(NatedAddress src, NatedAddress dst, String testField, UUID pingTimeoutUUID) {
+        super(src, dst, new Ping(testField, pingTimeoutUUID));
     }
 
     private NetPing(Header<NatedAddress> header, Ping content) {

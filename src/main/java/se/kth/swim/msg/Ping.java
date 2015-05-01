@@ -19,17 +19,25 @@
 
 package se.kth.swim.msg;
 
+import java.util.UUID;
+
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class Ping {
 	private String testField;
+	private UUID pingTimeoutUUID;
 	
-	public Ping(String testField) {
+	public Ping(String testField, UUID pingTimeoutUUID) {
 		this.testField = testField;
+		this.pingTimeoutUUID = pingTimeoutUUID;
 	}
 	
 	public String getTestField() {
 		return testField;
+	}
+	
+	public UUID getPingTimeoutUUID() {
+		return pingTimeoutUUID;
 	}
 }

@@ -18,7 +18,9 @@
  */
 package se.kth.swim;
 
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -59,30 +61,27 @@ public class SwimComp extends ComponentDefinition {
 	private final NatedAddress selfAddress;
 	private final Set<NatedAddress> bootstrapNodes;
 	private final NatedAddress aggregatorAddress;
+	private MembershipList<MembershipListItem> membershipList;
 
 	private UUID pingTimeoutId;
 	private UUID statusTimeoutId;
-
-	private int receivedPings = 0;
 	
-	public enum NodeStatus {
-		NEW,
-		DEAD,
-		SUSPECTED,
-		ALIVE
-	}
+	private int receivedPings = 0;
 
 	public SwimComp(SwimInit init) {
 		this.selfAddress = init.selfAddress;
 		log.info("{} initiating...", selfAddress);
 		this.bootstrapNodes = init.bootstrapNodes;
 		this.aggregatorAddress = init.aggregatorAddress;
+		// TODO Remove magic number!
+		this.membershipList = new MembershipList<MembershipListItem>(10);
 
 		subscribe(handleStart, control);
 		subscribe(handleStop, control);
 		subscribe(handlePing, network);
 		subscribe(handlePingTimeout, timer);
 		subscribe(handleStatusTimeout, timer);
+		subscribe(handlePingFailure, timer);
 		subscribe(handlePong, network);
 	}
 
@@ -95,10 +94,10 @@ public class SwimComp extends ComponentDefinition {
 			if (!bootstrapNodes.isEmpty()) {
 				
 				// Add bootstrap nodes to local membership list
-//				for(NatedAddress node : bootstrapNodes) {
-//					membershipList.push(new ViewNode(node));
-//					log.info("{} my bootstrap node: {}", selfAddress.getId(), node);
-//				}
+				for(NatedAddress node : bootstrapNodes) {
+					membershipList.getQueue().push(new MembershipListItem(new Peer(node)));
+					log.info("{} my bootstrap node: {}", selfAddress.getId(), node);
+				}
 				schedulePeriodicPing();
 			}
 			schedulePeriodicStatus();
@@ -132,6 +131,8 @@ public class SwimComp extends ComponentDefinition {
 
 			// Send PONG - Dummy LinkedList
 			//trigger(new NetPong(selfAddress, event.getSource(), new LinkedList<ViewNode>()), network);
+			if (event.getSource().getId() != 14)
+				trigger(new NetPong(selfAddress, event.getSource(), new MembershipList<Peer>(3), event.getContent().getPingTimeoutUUID()), network);
 		}
 
 	};
@@ -142,6 +143,7 @@ public class SwimComp extends ComponentDefinition {
 		public void handle(NetPong event) {
 			log.info("{} received PONG from: {}", selfAddress.getId(),
 					event.getSource());
+			cancelPingTimeout(event.getContent().getPingTimeoutUUID(), event.getSource());
 		}
 	};
 
@@ -163,10 +165,23 @@ public class SwimComp extends ComponentDefinition {
 //			ViewNode peer = membershipList.getElement(randInt);
 //			log.info("{} sending PING to node: {}", new Object[]{selfAddress.getId(), peer.getPeer()});
 //			trigger(new NetPing(selfAddress, peer.getPeer(), "lalakoko"), network);
+//			schedulePingTimeout(peer.getPeer());
+			NatedAddress peer = membershipList.getQueue().getElement(0).getPeer().getNode();
+			UUID pingTimeoutUUID = schedulePingTimeout(peer);
+			trigger(new NetPing(selfAddress, peer, pingTimeoutUUID.toString(), pingTimeoutUUID), network);
 		}
 
 	};
 
+	private Handler<PingFailureTimeout> handlePingFailure = new Handler<PingFailureTimeout>() {
+
+		@Override
+		public void handle(PingFailureTimeout event) {
+			// TODO Initiate indirect ping protocol
+			log.info("{} Did NOT received pong message", selfAddress);
+		}
+		
+	};
 	private Handler<StatusTimeout> handleStatusTimeout = new Handler<StatusTimeout>() {
 
 		@Override
@@ -178,9 +193,26 @@ public class SwimComp extends ComponentDefinition {
 		}
 
 	};
+	
+	// Ping timeout for Failure Detector
+	private UUID schedulePingTimeout(NatedAddress destination) {
+		log.info("{} Setting PING FD timeout for node: {}", selfAddress, destination);
+		SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(2000, 2000);
+		PingFailureTimeout pft = new PingFailureTimeout(spt);
+		spt.setTimeoutEvent(pft);
+		trigger(spt, timer);
+		
+		return pft.getTimeoutId();
+	}
+	
+	private void cancelPingTimeout(UUID pingTimeoutUUID, NatedAddress source) {
+		log.info("{} Canceling PING FD timeout for node: {}", selfAddress, source);
+		CancelTimeout ct = new CancelTimeout(pingTimeoutUUID);
+		trigger(ct, timer);
+	}
 
 	private void schedulePeriodicPing() {
-		SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(1000, 1000);
+		SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(5000, 5000);
 		PingTimeout sc = new PingTimeout(spt);
 		spt.setTimeoutEvent(sc);
 		pingTimeoutId = sc.getTimeoutId();
@@ -233,5 +265,13 @@ public class SwimComp extends ComponentDefinition {
 		public PingTimeout(SchedulePeriodicTimeout request) {
 			super(request);
 		}
+	}
+	
+	private static class PingFailureTimeout extends Timeout {
+		
+		protected PingFailureTimeout(SchedulePeriodicTimeout request) {
+			super(request);
+		}
+		
 	}
 }

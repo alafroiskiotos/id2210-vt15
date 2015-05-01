@@ -1,5 +1,7 @@
 package se.kth.swim.msg.net;
 
+import java.util.UUID;
+
 import se.kth.swim.MembershipList;
 import se.kth.swim.Peer;
 import se.kth.swim.msg.Pong;
@@ -8,8 +10,8 @@ import se.sics.p2ptoolbox.util.network.NatedAddress;
 
 public class NetPong extends NetMsg<Pong> {
 
-	public NetPong(NatedAddress src, NatedAddress dst, MembershipList<Peer> view) {
-        super(src, dst, new Pong(view));
+	public NetPong(NatedAddress src, NatedAddress dst, MembershipList<Peer> view, UUID pingTimeoutUUID) {
+        super(src, dst, new Pong(view, pingTimeoutUUID));
     }
 	
 	public NetPong(Header<NatedAddress> header, Pong content) {

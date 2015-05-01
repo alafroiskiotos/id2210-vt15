@@ -6,6 +6,7 @@ public class MembershipListItem {
 	
 	public MembershipListItem(Peer peer) {
 		this.peer = peer;
+		this.infectionTime = 0;
 	}
 
 	public int getInfectionTime() {
