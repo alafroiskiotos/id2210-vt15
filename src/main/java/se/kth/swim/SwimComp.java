@@ -197,7 +197,7 @@ public class SwimComp extends ComponentDefinition {
 	// Ping timeout for Failure Detector
 	private UUID schedulePingTimeout(NatedAddress destination) {
 		log.info("{} Setting PING FD timeout for node: {}", selfAddress, destination);
-		SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(2000, 2000);
+		SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(10000, 10000);
 		PingFailureTimeout pft = new PingFailureTimeout(spt);
 		spt.setTimeoutEvent(pft);
 		trigger(spt, timer);
@@ -212,7 +212,7 @@ public class SwimComp extends ComponentDefinition {
 	}
 
 	private void schedulePeriodicPing() {
-		SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(5000, 5000);
+		SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(10000, 10000);
 		PingTimeout sc = new PingTimeout(spt);
 		spt.setTimeoutEvent(sc);
 		pingTimeoutId = sc.getTimeoutId();
@@ -269,7 +269,7 @@ public class SwimComp extends ComponentDefinition {
 	
 	private static class PingFailureTimeout extends Timeout {
 		
-		protected PingFailureTimeout(SchedulePeriodicTimeout request) {
+		public PingFailureTimeout(SchedulePeriodicTimeout request) {
 			super(request);
 		}
 		
