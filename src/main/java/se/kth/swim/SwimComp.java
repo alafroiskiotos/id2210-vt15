@@ -41,6 +41,7 @@ import se.sics.kompics.Stop;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
+import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.p2ptoolbox.simulator.run.LauncherComp;
@@ -141,9 +142,10 @@ public class SwimComp extends ComponentDefinition {
 
 		@Override
 		public void handle(NetPong event) {
-			log.info("{} received PONG from: {}", selfAddress.getId(),
-					event.getSource());
-			cancelPingTimeout(event.getContent().getPingTimeoutUUID(), event.getSource());
+			UUID pingTimeout = event.getContent().getPingTimeoutUUID();
+			log.info("{} received PONG from: {} Timeout id: {}", new Object[] {selfAddress.getId(),
+					event.getSource(), pingTimeout.toString()});
+			cancelPingTimeout(pingTimeout, event.getSource());
 		}
 	};
 
@@ -178,7 +180,7 @@ public class SwimComp extends ComponentDefinition {
 		@Override
 		public void handle(PingFailureTimeout event) {
 			// TODO Initiate indirect ping protocol
-			log.info("{} Did NOT received pong message", selfAddress);
+			log.info("{} Did NOT received pong message from: {}", selfAddress, event.getPeer());
 		}
 		
 	};
@@ -197,16 +199,16 @@ public class SwimComp extends ComponentDefinition {
 	// Ping timeout for Failure Detector
 	private UUID schedulePingTimeout(NatedAddress destination) {
 		log.info("{} Setting PING FD timeout for node: {}", selfAddress, destination);
-		SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(10000, 10000);
-		PingFailureTimeout pft = new PingFailureTimeout(spt);
-		spt.setTimeoutEvent(pft);
-		trigger(spt, timer);
+		ScheduleTimeout st = new ScheduleTimeout(20000);
+		PingFailureTimeout pft = new PingFailureTimeout(st, destination);
+		st.setTimeoutEvent(pft);
+		trigger(st, timer);
 		
 		return pft.getTimeoutId();
 	}
 	
 	private void cancelPingTimeout(UUID pingTimeoutUUID, NatedAddress source) {
-		log.info("{} Canceling PING FD timeout for node: {}", selfAddress, source);
+		log.info("{} Canceling PING FD timeout for node: {} with ID: {}", new Object[] {selfAddress, source, pingTimeoutUUID});
 		CancelTimeout ct = new CancelTimeout(pingTimeoutUUID);
 		trigger(ct, timer);
 	}
@@ -268,10 +270,14 @@ public class SwimComp extends ComponentDefinition {
 	}
 	
 	private static class PingFailureTimeout extends Timeout {
-		
-		public PingFailureTimeout(SchedulePeriodicTimeout request) {
+		private NatedAddress peer;
+		public PingFailureTimeout(ScheduleTimeout request, NatedAddress peer) {
 			super(request);
+			this.peer = peer;
 		}
 		
+		public NatedAddress getPeer() {
+			return peer;
+		}
 	}
 }
