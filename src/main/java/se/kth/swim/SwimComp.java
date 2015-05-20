@@ -149,7 +149,7 @@ public class SwimComp extends ComponentDefinition {
 			// Add the PING requester to the local view
 			MembershipList<Peer> receivedView = event.getContent().getPiggyback();
 			receivedView.getQueue().push(new Peer(event.getSource(), NodeState.ALIVE));
-			// TODO Merge received view with local
+			// Merge received view with local
 			membershipList = PeerExchangeSelection.merge(membershipList, receivedView);
 
 			// Send PONG with a partial view - piggyback
@@ -169,7 +169,7 @@ public class SwimComp extends ComponentDefinition {
 							pingTimeoutID.toString() });
 			cancelPingTimeout(pingTimeoutID, event.getSource());
 
-			// TODO Merge received view with local
+			// Merge received view with local
 			membershipList = PeerExchangeSelection.merge(membershipList, event.getContent().getView());
 			
 			log.info("{} Local MERGED membership list: {}", selfAddress.getId(), membershipList);
