@@ -32,5 +32,13 @@ public class FifoQueue<V> {
 	
 	public V getElement(Integer index) {
 		return queue.get(index);
+	} 
+	
+	public V pop() {
+		return queue.get(0);
+	}
+	
+	public List<V> getList() {
+		return queue;
 	}
 }

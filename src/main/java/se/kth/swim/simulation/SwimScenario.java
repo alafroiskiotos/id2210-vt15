@@ -278,7 +278,7 @@ public class SwimScenario {
 //                deadLinks1.startAfterTerminationOf(10000,startPeers);
 //                disconnectedNodes1.startAfterTerminationOf(10000, startPeers);
                 fetchSimulationResult.startAfterTerminationOf(30*1000, startPeers);
-                terminateAfterTerminationOf(1000, fetchSimulationResult);
+                terminateAfterTerminationOf(10000, fetchSimulationResult);
 
             }
         };

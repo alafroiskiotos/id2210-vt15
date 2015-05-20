@@ -20,4 +20,9 @@ public class MembershipListItem {
 	public void incInfectionTime() {
 		infectionTime++;
 	}
+	
+	@Override
+	public String toString() {
+		return peer.getNode().toString();
+	}
 }

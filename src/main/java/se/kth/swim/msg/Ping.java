@@ -21,22 +21,25 @@ package se.kth.swim.msg;
 
 import java.util.UUID;
 
+import se.kth.swim.MembershipList;
+import se.kth.swim.Peer;
+
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class Ping {
-	private String testField;
+	private MembershipList<Peer> piggyback;
 	private UUID pingTimeoutUUID;
 	
-	public Ping(String testField, UUID pingTimeoutUUID) {
-		this.testField = testField;
+	public Ping(MembershipList<Peer> piggyback, UUID pingTimeoutUUID) {
+		this.piggyback = piggyback;
 		this.pingTimeoutUUID = pingTimeoutUUID;
 	}
 	
-	public String getTestField() {
-		return testField;
+	public MembershipList<Peer> getPiggyback() {
+		return piggyback;
 	}
-	
+
 	public UUID getPingTimeoutUUID() {
 		return pingTimeoutUUID;
 	}
