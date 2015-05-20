@@ -25,4 +25,18 @@ public class MembershipListItem {
 	public String toString() {
 		return peer.getNode().toString();
 	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if (other instanceof MembershipListItem) {
+			return this.getPeer().equals(((MembershipListItem) other).getPeer()) ? true : false;
+		}
+		
+		return false;
+	}
+	
+	@Override
+	public int hashCode() {
+		return this.getPeer().hashCode() + infectionTime;
+	}
 }

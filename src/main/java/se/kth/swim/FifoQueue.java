@@ -26,8 +26,12 @@ public class FifoQueue<V> {
 		return queue.iterator();
 	}
 	
-	public Integer getSize() {
+	public Integer getQueueSize() {
 		return queue.size();
+	}
+	
+	public Integer getMaxSize() {
+		return size;
 	}
 	
 	public V getElement(Integer index) {
@@ -36,6 +40,10 @@ public class FifoQueue<V> {
 	
 	public V pop() {
 		return queue.get(0);
+	}
+	
+	public boolean contains(V obj) {
+		return queue.contains(obj) ? true : false;
 	}
 	
 	public List<V> getList() {

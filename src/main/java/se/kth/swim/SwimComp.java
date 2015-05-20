@@ -100,7 +100,7 @@ public class SwimComp extends ComponentDefinition {
 				// Add bootstrap nodes to local membership list
 				for (NatedAddress node : bootstrapNodes) {
 					membershipList.getQueue().push(
-							new MembershipListItem(new Peer(node)));
+							new MembershipListItem(new Peer(node, NodeState.ALIVE)));
 					log.info("{} my bootstrap node: {}", selfAddress.getId(),
 							node);
 				}
@@ -133,24 +133,28 @@ public class SwimComp extends ComponentDefinition {
 					new Object[] { selfAddress.getId(),
 							event.getHeader().getSource() });
 			receivedPings++;
+			
 
-			System.out.println("Node: " + selfAddress.toString());
-			System.out.println("Partial view received:");
-			System.out.println(event.getContent().getPiggyback());
+			log.info("{} Partial view received: {}", selfAddress.getId(), event.getContent().getPiggyback());
 
-			// TODO Merge received view with local
-
-			System.out.println("Local membership list:");
-			System.out.println(membershipList);
+			// Create piggyback view
+			Collections.sort(membershipList.getQueue().getList(), new MembershipListStateSortPolicy(NodeState.DEAD));
+			MembershipList<Peer> piggyback = PeerExchangeSelection.getPeers(event.getSource(), membershipList, PIGGYBACK_SIZE);
+			
+			log.info("{} Local membership list: {}", selfAddress.getId(), membershipList);
 			Collections.sort(membershipList.getQueue().getList(),
 					new MembershipListInfectionSortPolicy());
-			System.out.println("After sorting:");
-			System.out.println(membershipList);
+			log.info("{} Local membership list AFTER sorting: {}", selfAddress.getId(), membershipList);
 
-			// Send PONG - Dummy LinkedList
+			// Add the PING requester to the local view
+			MembershipList<Peer> receivedView = event.getContent().getPiggyback();
+			receivedView.getQueue().push(new Peer(event.getSource(), NodeState.ALIVE));
+			// TODO Merge received view with local
+			membershipList = PeerExchangeSelection.merge(membershipList, receivedView);
+
+			// Send PONG with a partial view - piggyback
 			trigger(new NetPong(selfAddress, event.getSource(),
-					new MembershipList<Peer>(2), event.getContent()
-							.getPingTimeoutUUID()), network);
+					piggyback, event.getContent().getPingTimeoutUUID()), network);
 		}
 
 	};
@@ -166,6 +170,9 @@ public class SwimComp extends ComponentDefinition {
 			cancelPingTimeout(pingTimeoutID, event.getSource());
 
 			// TODO Merge received view with local
+			membershipList = PeerExchangeSelection.merge(membershipList, event.getContent().getView());
+			
+			log.info("{} Local MERGED membership list: {}", selfAddress.getId(), membershipList);
 		}
 	};
 
@@ -184,21 +191,24 @@ public class SwimComp extends ComponentDefinition {
 			// TODO round-robin selection
 			// Random rand = LauncherComp.scenario.getRandom();
 			Random rand = new Random();
-			Integer randInt = rand.nextInt(membershipList.getQueue().getSize());
+			Integer randInt = rand.nextInt(membershipList.getQueue().getQueueSize());
 			MembershipListItem peer = membershipList.getQueue().getElement(
 					randInt);
 			log.info("{} sending PING to node: {}",
 					new Object[] { selfAddress.getId(),
 							peer.getPeer().getNode() });
+			
+			// Schedule timeout for the Failure Detector
 			UUID pingTimeoutID = schedulePingTimeout(peer.getPeer().getNode());
-
-			// Piggyback partial view of my membership list
+			
+			// Sort my partial view
 			Collections.sort(membershipList.getQueue().getList(),
-					new MembershipListInfectionSortPolicy());
+					new MembershipListStateSortPolicy(NodeState.DEAD));
 
 			MembershipList<Peer> piggyback = PeerExchangeSelection.getPeers(
 					peer.getPeer().getNode(), membershipList, PIGGYBACK_SIZE);
 
+			// Piggyback partial view of my membership list
 			trigger(new NetPing(selfAddress, peer.getPeer().getNode(),
 					piggyback, pingTimeoutID), network);
 		}
