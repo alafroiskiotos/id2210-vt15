@@ -8,6 +8,7 @@ public class Peer {
 	
 	public Peer(NatedAddress node) {
 		this.node = node;
+		this.state = NodeState.SUSPECTED;
 	}
 	
 	public NatedAddress getNode() {
