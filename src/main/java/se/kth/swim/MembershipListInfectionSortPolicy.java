@@ -6,7 +6,6 @@ public class MembershipListInfectionSortPolicy implements Comparator<MembershipL
 
 	public MembershipListInfectionSortPolicy() {}
 
-  @Override
 	public int compare(MembershipListItem o1, MembershipListItem o2) {
 		return o1.getInfectionTime() < o2.getInfectionTime() ? -1 :
 			o1.getInfectionTime() == o2.getInfectionTime() ? 0 : 1;
