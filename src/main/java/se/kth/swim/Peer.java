@@ -25,7 +25,7 @@ public class Peer {
 
 	@Override
 	public String toString() {
-		return node.toString();
+		return node.toString() + ", STATE: " + state;
 	}
 
 	@Override

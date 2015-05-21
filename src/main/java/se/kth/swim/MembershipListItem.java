@@ -23,7 +23,7 @@ public class MembershipListItem {
 	
 	@Override
 	public String toString() {
-		return peer.getNode().toString() + ", InfectionTime -> " + infectionTime;
+		return peer.getNode().toString() + ", InfectionTime -> " + infectionTime + ", STATE: " + peer.getState();
 	}
 	
 	@Override
