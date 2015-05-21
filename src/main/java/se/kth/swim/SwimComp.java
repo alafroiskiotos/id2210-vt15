@@ -57,7 +57,7 @@ public class SwimComp extends ComponentDefinition {
 	// λlogn times
 	private static final Integer INFECT_FACTOR = 3;
 	private static final Integer MEMBERSHIP_SIZE = 10;
-	private static final Integer PIGGYBACK_SIZE = 3;
+	private static final Integer PIGGYBACK_SIZE = 1;
 
 	private Positive<Network> network = requires(Network.class);
 	private Positive<Timer> timer = requires(Timer.class);
@@ -134,12 +134,14 @@ public class SwimComp extends ComponentDefinition {
 							event.getHeader().getSource() });
 			receivedPings++;
 			
-
 			log.info("{} Partial view received: {}", selfAddress.getId(), event.getContent().getPiggyback());
 
 			// Create piggyback view
 			Collections.sort(membershipList.getQueue().getList(), new MembershipListStateSortPolicy(NodeState.DEAD));
 			MembershipList<Peer> piggyback = PeerExchangeSelection.getPeers(event.getSource(), membershipList, PIGGYBACK_SIZE);
+      
+      // Increments the infection time of the piggybacked node's
+      PeerExchangeSelection.updateInfectionTime(membershipList, piggyback);
 			
 			log.info("{} Local membership list: {}", selfAddress.getId(), membershipList);
 			Collections.sort(membershipList.getQueue().getList(),
@@ -192,8 +194,7 @@ public class SwimComp extends ComponentDefinition {
 			// Random rand = LauncherComp.scenario.getRandom();
 			Random rand = new Random();
 			Integer randInt = rand.nextInt(membershipList.getQueue().getQueueSize());
-			MembershipListItem peer = membershipList.getQueue().getElement(
-					randInt);
+			MembershipListItem peer = membershipList.getQueue().getElement(randInt);
 			log.info("{} sending PING to node: {}",
 					new Object[] { selfAddress.getId(),
 							peer.getPeer().getNode() });
@@ -207,6 +208,12 @@ public class SwimComp extends ComponentDefinition {
 
 			MembershipList<Peer> piggyback = PeerExchangeSelection.getPeers(
 					peer.getPeer().getNode(), membershipList, PIGGYBACK_SIZE);
+      
+      // Increments the infection time of the piggybacked node's
+      PeerExchangeSelection.updateInfectionTime(membershipList, piggyback);
+      
+      log.info("{} membership list after PING: {}",
+					new Object[] { selfAddress.getId(),membershipList });
 
 			// Piggyback partial view of my membership list
 			trigger(new NetPing(selfAddress, peer.getPeer().getNode(),
@@ -222,6 +229,12 @@ public class SwimComp extends ComponentDefinition {
 			// TODO Initiate indirect ping protocol
 			log.info("{} Did NOT received pong message from: {}", selfAddress,
 					event.getPeer());
+      
+      int index = membershipList.getQueue().getList().indexOf(event.getPeer());
+      
+      if(index >= 0) {
+        membershipList.getQueue().getList().get(index).getPeer().setState(NodeState.SUSPECTED);
+      }
 		}
 
 	};

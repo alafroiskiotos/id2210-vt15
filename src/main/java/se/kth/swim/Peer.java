@@ -31,9 +31,7 @@ public class Peer {
 	@Override
 	public boolean equals(Object other) {
 		if (other instanceof Peer) {
-			if ((this.getNode().getId()
-					.equals(((Peer) other).getNode().getId()))
-					&& (this.getState().equals(((Peer) other).getState()))) {
+			if ((this.getNode().getId().equals(((Peer) other).getNode().getId()))) {
 				return true;
 			}
 		}
@@ -43,6 +41,6 @@ public class Peer {
 
 	@Override
 	public int hashCode() {
-		return this.getNode().getId() + this.getState().ordinal();
+		return this.getNode().getId();
 	}
 }
