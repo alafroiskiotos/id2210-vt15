@@ -10,7 +10,7 @@ import java.util.Comparator;
  *
  */
 public class MembershipListStateSortPolicy implements Comparator<MembershipListItem> {
-	private NodeState state;
+	private final NodeState state;
 	public MembershipListStateSortPolicy(NodeState state) {
 		this.state = state;
 	}

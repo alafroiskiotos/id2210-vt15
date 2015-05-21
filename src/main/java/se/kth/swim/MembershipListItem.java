@@ -1,7 +1,7 @@
 package se.kth.swim;
 
 public class MembershipListItem {
-	private Peer peer;
+	private final Peer peer;
 	private int infectionTime;
 	
 	public MembershipListItem(Peer peer) {
@@ -29,7 +29,7 @@ public class MembershipListItem {
 	@Override
 	public boolean equals(Object other) {
 		if (other instanceof MembershipListItem) {
-			return this.getPeer().equals(((MembershipListItem) other).getPeer()) ? true : false;
+			return this.getPeer().equals(((MembershipListItem) other).getPeer());
 		}
 		
 		return false;

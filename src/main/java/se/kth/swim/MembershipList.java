@@ -6,7 +6,7 @@ import java.util.Iterator;
 public class MembershipList<C> implements Serializable {
 	private static final long serialVersionUID = -4942331087364295142L;
 	
-	private FifoQueue<C> queue;
+	private final FifoQueue<C> queue;
 	
 	public MembershipList(int size) {
 		this.queue = new FifoQueue<C>(size);

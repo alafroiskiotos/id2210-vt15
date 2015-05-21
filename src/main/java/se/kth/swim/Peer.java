@@ -1,11 +1,9 @@
 package se.kth.swim;
 
-import com.google.common.base.Equivalence;
-
 import se.sics.p2ptoolbox.util.network.NatedAddress;
 
 public class Peer {
-	private NatedAddress node;
+	private final NatedAddress node;
 	private NodeState state;
 
 	public Peer(NatedAddress node, NodeState state) {

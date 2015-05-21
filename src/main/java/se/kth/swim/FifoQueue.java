@@ -6,7 +6,7 @@ import java.util.List;
 
 public class FifoQueue<V> {
 	private final Integer size;
-	private List<V> queue;
+	private final List<V> queue;
 	
 	public FifoQueue(Integer size) {
 		this.size = size;
@@ -43,7 +43,7 @@ public class FifoQueue<V> {
 	}
 	
 	public boolean contains(V obj) {
-		return queue.contains(obj) ? true : false;
+		return queue.contains(obj);
 	}
 	
 	public List<V> getList() {

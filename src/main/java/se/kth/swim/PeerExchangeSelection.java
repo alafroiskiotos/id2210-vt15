@@ -9,7 +9,7 @@ public class PeerExchangeSelection {
 		MembershipList<Peer> ret = new MembershipList<Peer>(size);
 		for (int i = 0; i < list.getQueue().getQueueSize() && i < size; i++) {
 			Peer item = list.getQueue().getElement(i).getPeer();
-			if (item.getNode().getId() != target.getId()) {
+			if (item.getNode().getId().equals(target.getId())) {
 				ret.getQueue().push(item);
 			}
 		}
