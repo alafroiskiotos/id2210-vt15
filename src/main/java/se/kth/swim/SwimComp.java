@@ -63,10 +63,11 @@ public class SwimComp extends ComponentDefinition {
 
 	private static final Logger log = LoggerFactory.getLogger(SwimComp.class);
 	// λlogn times
-	private static final Integer INFECT_FACTOR = 3;
+	private static final Integer INFECT_FACTOR = 2;
 	private static final Integer MEMBERSHIP_SIZE = 10;
 	private static final Integer PIGGYBACK_SIZE = 1;
-  private static final Integer INDIRECT_PING_SIZE = 2;
+	private static final Integer INDIRECT_PING_SIZE = 2;
+	private Integer localSequenceNumber = 0;
 
 	private Positive<Network> network = requires(Network.class);
 	private Positive<Timer> timer = requires(Timer.class);
@@ -87,8 +88,7 @@ public class SwimComp extends ComponentDefinition {
 		log.info("{} initiating...", selfAddress);
 		this.bootstrapNodes = init.bootstrapNodes;
 		this.aggregatorAddress = init.aggregatorAddress;
-		// TODO Remove magic number!
-		this.membershipList = new MembershipList<MembershipListItem>(10);
+		this.membershipList = new MembershipList<MembershipListItem>(MEMBERSHIP_SIZE);
     this.self = new Peer(selfAddress, NodeState.ALIVE);
 
 		subscribe(handleStart, control);
@@ -211,7 +211,7 @@ public class SwimComp extends ComponentDefinition {
 			// TODO round-robin selection
 			// Random rand = LauncherComp.scenario.getRandom();
 			Random rand = new Random();
-      List<Peer> alive = getAll(NodeState.ALIVE);
+			List<Peer> alive = getAll(NodeState.ALIVE);
 			Integer randInt = rand.nextInt(alive.size());
 			Peer peer = alive.get(randInt);
 			log.info("{} sending PING to node: {}",
@@ -230,6 +230,8 @@ public class SwimComp extends ComponentDefinition {
       
       // Increments the infection time of the piggybacked node's
       PeerExchangeSelection.updateInfectionTime(membershipList, piggyback);
+      
+      membershipList = PeerExchangeSelection.sanitize(membershipList, INFECT_FACTOR);
       
       log.info("{} membership list after PING: {}",
 					new Object[] { selfAddress.getId(),membershipList });

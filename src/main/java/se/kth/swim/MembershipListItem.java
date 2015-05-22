@@ -3,16 +3,26 @@ package se.kth.swim;
 public class MembershipListItem {
 	private final Peer peer;
 	private int infectionTime;
+	private Integer sequenceNumber;
 	
 	public MembershipListItem(Peer peer) {
 		this.peer = peer;
 		this.infectionTime = 0;
+		this.sequenceNumber = 0;
 	}
 
 	public int getInfectionTime() {
 		return infectionTime;
 	}
+	
+	public Integer getSequenceNumber() {
+		return sequenceNumber;
+	}
   
+	public boolean causalAfter(Integer receivedSeqNum) {
+		return receivedSeqNum > sequenceNumber ? true : false;
+	}
+	
   public void resetInfectionTime() {
     infectionTime = 0;
   }
