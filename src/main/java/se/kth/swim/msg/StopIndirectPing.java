@@ -16,24 +16,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.kth.swim.msg.net;
+package se.kth.swim.msg;
 
-import se.kth.swim.msg.IndirectPing;
-import se.sics.kompics.network.Header;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import java.util.UUID;
+import se.kth.swim.Peer;
 
-public class NetIndirectPing extends NetMsg<IndirectPing> {
+public class StopIndirectPing {
+  private final Peer suspectedPeer;
+  private final UUID deadPingTimeout;
   
-  public NetIndirectPing(NatedAddress source, NatedAddress destination, IndirectPing ping) {
-    super(source, destination, ping);
-  }
-  
-  private NetIndirectPing(Header<NatedAddress> header, IndirectPing content) {
-    super(header, content);
+  public StopIndirectPing(Peer suspected, UUID timeout) {
+    this.suspectedPeer = suspected;
+    this.deadPingTimeout = timeout;
   }
 
-  @Override
-  public NetMsg copyMessage(Header<NatedAddress> newHeader) {
-    return new NetIndirectPing(newHeader, getContent());
+  public Peer getSuspectedPeer() {
+    return suspectedPeer;
+  }
+
+  public UUID getDeadPingTimeout() {
+    return deadPingTimeout;
   }
 }

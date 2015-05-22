@@ -18,22 +18,21 @@
  */
 package se.kth.swim.msg.net;
 
-import se.kth.swim.msg.IndirectPing;
+import se.kth.swim.msg.IndirectPong;
 import se.sics.kompics.network.Header;
 import se.sics.p2ptoolbox.util.network.NatedAddress;
 
-public class NetIndirectPing extends NetMsg<IndirectPing> {
-  
-  public NetIndirectPing(NatedAddress source, NatedAddress destination, IndirectPing ping) {
-    super(source, destination, ping);
+public class NetIndirectPong extends NetMsg<IndirectPong>{
+
+  public NetIndirectPong(NatedAddress source, NatedAddress destination, IndirectPong pong) {
+    super(source, destination, pong);
   }
   
-  private NetIndirectPing(Header<NatedAddress> header, IndirectPing content) {
+  private NetIndirectPong(Header<NatedAddress> header, IndirectPong content) {
     super(header, content);
   }
-
   @Override
   public NetMsg copyMessage(Header<NatedAddress> newHeader) {
-    return new NetIndirectPing(newHeader, getContent());
+    return new NetIndirectPong(newHeader, getContent());
   }
 }

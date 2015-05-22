@@ -12,7 +12,7 @@ public class PeerExchangeSelection {
 		MembershipList<Peer> ret = new MembershipList<Peer>(size);
 		for (int i = 0; i < list.getQueue().getQueueSize() && ret.getQueue().getQueueSize() < size; i++) {
 			Peer item = list.getQueue().getElement(i).getPeer();
-			if (!item.getNode().getId().equals(target.getId())) {
+			if (!item.getNode().getId().equals(target.getId()) && !item.getState().equals(NodeState.SUSPECTED)) {
 				ret.getQueue().push(item);
 			}
 		}
@@ -84,22 +84,22 @@ public class PeerExchangeSelection {
             .map(x -> x.getPeer())
             .collect(Collectors.toList());
     
-    MembershipList<Peer> ret = new MembershipList<>(size);
+    MembershipList<Peer> ret = new MembershipList<>(Math.min(size, alivePeers.size()));
     
     Random r = new Random();
     
     // Peers selection loop.
-    while(ret.getQueue().getQueueSize() < size && 
+    while(ret.getQueue().getQueueSize() < Math.min(size, alivePeers.size()) && 
             ret.getQueue().getQueueSize() < list.getQueue().getQueueSize()) {
       
       
-      int rn = r.nextInt(Math.max(size, list.getQueue().getQueueSize()));
+      int rn = r.nextInt(Math.min(size, alivePeers.size()));
       
-      if(ret.getQueue().contains(list.getQueue().getElement(rn).getPeer())) {
+      if(ret.getQueue().contains(alivePeers.get(rn))) {
         continue;
       }
       
-      ret.getQueue().push(list.getQueue().getElement(rn).getPeer());
+      ret.getQueue().push(alivePeers.get(rn));
     }
     
     return ret;

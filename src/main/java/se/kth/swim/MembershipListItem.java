@@ -12,6 +12,10 @@ public class MembershipListItem {
 	public int getInfectionTime() {
 		return infectionTime;
 	}
+  
+  public void resetInfectionTime() {
+    infectionTime = 0;
+  }
 	
 	public Peer getPeer() {
 		return peer;

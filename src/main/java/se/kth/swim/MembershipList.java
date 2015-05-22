@@ -2,6 +2,7 @@ package se.kth.swim;
 
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.List;
 
 public class MembershipList<C> implements Serializable {
 	private static final long serialVersionUID = -4942331087364295142L;
@@ -15,7 +16,7 @@ public class MembershipList<C> implements Serializable {
 	public FifoQueue<C> getQueue() {
 		return queue;
 	}
-	
+  
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();

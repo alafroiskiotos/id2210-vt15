@@ -20,20 +20,28 @@ package se.kth.swim;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.swim.msg.IndirectPing;
+import se.kth.swim.msg.IndirectPong;
+import se.kth.swim.msg.StartIndirectPing;
 
 import se.kth.swim.msg.Status;
+import se.kth.swim.msg.StopIndirectPing;
 import se.kth.swim.msg.net.NetIndirectPing;
+import se.kth.swim.msg.net.NetIndirectPong;
 import se.kth.swim.msg.net.NetPing;
 import se.kth.swim.msg.net.NetPong;
+import se.kth.swim.msg.net.NetStartIndirectPing;
 import se.kth.swim.msg.net.NetStatus;
+import se.kth.swim.msg.net.NetStopIndirectPing;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
@@ -67,6 +75,7 @@ public class SwimComp extends ComponentDefinition {
 	private final Set<NatedAddress> bootstrapNodes;
 	private final NatedAddress aggregatorAddress;
 	private MembershipList<MembershipListItem> membershipList;
+  private final Peer self;
 
 	private UUID pingTimeoutId;
 	private UUID statusTimeoutId;
@@ -80,14 +89,22 @@ public class SwimComp extends ComponentDefinition {
 		this.aggregatorAddress = init.aggregatorAddress;
 		// TODO Remove magic number!
 		this.membershipList = new MembershipList<MembershipListItem>(10);
+    this.self = new Peer(selfAddress, NodeState.ALIVE);
 
 		subscribe(handleStart, control);
 		subscribe(handleStop, control);
-		subscribe(handlePing, network);
+    
 		subscribe(handlePingTimeout, timer);
 		subscribe(handleStatusTimeout, timer);
 		subscribe(handlePingFailure, timer);
+    subscribe(handleDeatTimeout, timer);
+    
+    subscribe(handlePing, network);
 		subscribe(handlePong, network);
+    subscribe(handleStartIndirectPing, network);
+    subscribe(handleIndirectPing, network);
+    subscribe(handleIndirectPong, network);
+    subscribe(handleStopIndirectPing, network);
 	}
 
 	private Handler<Start> handleStart = new Handler<Start>() {
@@ -194,21 +211,22 @@ public class SwimComp extends ComponentDefinition {
 			// TODO round-robin selection
 			// Random rand = LauncherComp.scenario.getRandom();
 			Random rand = new Random();
-			Integer randInt = rand.nextInt(membershipList.getQueue().getQueueSize());
-			MembershipListItem peer = membershipList.getQueue().getElement(randInt);
+      List<Peer> alive = getAll(NodeState.ALIVE);
+			Integer randInt = rand.nextInt(alive.size());
+			Peer peer = alive.get(randInt);
 			log.info("{} sending PING to node: {}",
 					new Object[] { selfAddress.getId(),
-							peer.getPeer().getNode() });
+							peer.getNode() });
 			
 			// Schedule timeout for the Failure Detector
-			UUID pingTimeoutID = schedulePingTimeout(peer.getPeer());
+			UUID pingTimeoutID = schedulePingTimeout(peer);
 			
 			// Sort my partial view
 			Collections.sort(membershipList.getQueue().getList(),
 					new MembershipListStateSortPolicy(NodeState.DEAD));
 
 			MembershipList<Peer> piggyback = PeerExchangeSelection.getPeers(
-					peer.getPeer().getNode(), membershipList, PIGGYBACK_SIZE);
+					peer.getNode(), membershipList, PIGGYBACK_SIZE);
       
       // Increments the infection time of the piggybacked node's
       PeerExchangeSelection.updateInfectionTime(membershipList, piggyback);
@@ -217,7 +235,7 @@ public class SwimComp extends ComponentDefinition {
 					new Object[] { selfAddress.getId(),membershipList });
 
 			// Piggyback partial view of my membership list
-			trigger(new NetPing(selfAddress, peer.getPeer().getNode(),
+			trigger(new NetPing(selfAddress, peer.getNode(),
 					piggyback, pingTimeoutID), network);
 		}
 
@@ -236,16 +254,21 @@ public class SwimComp extends ComponentDefinition {
       if(index >= 0) {
         membershipList.getQueue().getList().get(index).getPeer().setState(NodeState.SUSPECTED);
         log.info("SUSPECTED -> " + event.getPeer().toString());
-        
-        // Set a new timeout -> DEAD timeout
-        UUID uuid = scheduleDeadTimeout(event.getPeer());
-        
+    
         // Random peer selection for indirect ping
         MembershipList<Peer> randomPeers = PeerExchangeSelection.getIndirectPingPeers(membershipList, INDIRECT_PING_SIZE);
         
+        if (randomPeers.getQueue().getQueueSize() > 0) {
+          // Set a new timeout -> DEAD timeout
+          UUID uuid = scheduleDeadTimeout(event.getPeer());
+        
         // Indirect ping
-        randomPeers.getQueue().getList().forEach(x -> 
-                trigger(new NetIndirectPing(selfAddress, x.getNode(), event.getPeer(), uuid), network));
+          randomPeers.getQueue().getList().forEach(x -> {
+                  trigger(new NetStartIndirectPing(selfAddress, x.getNode(), 
+                          new StartIndirectPing(self, event.getPeer(), uuid)), network);
+          log.info("Receiver of Indirect Ping is peer: {}", x.getNode().getId());});
+        }
+        log.info("MALAKIA");
       }
       
       log.info("{} membership list after PING FAILURE TIMEOUT: {}",
@@ -253,13 +276,60 @@ public class SwimComp extends ComponentDefinition {
 		}
 	};
   
+  private final Handler<NetStartIndirectPing> handleStartIndirectPing = new Handler<NetStartIndirectPing>() {
+
+    @Override
+    public void handle(NetStartIndirectPing event) {
+      // Sends the indirect ping
+      log.info("Node {} received NetStartIndirectPing for suspected {}", selfAddress.getId(), event.getContent().getSuspectedPeer());
+			trigger(new NetIndirectPing(selfAddress, event.getContent().getSuspectedPeer().getNode(),
+					new IndirectPing(event.getContent().getInitiatorPeer(), event.getContent().getDeadPingTimeout())), network);
+    }
+  };
+  
   private final Handler<NetIndirectPing> handleIndirectPing = new Handler<NetIndirectPing>() {
 
     @Override
     public void handle(NetIndirectPing event) {
-      // Sends the indirect ping - IMPLEMENT OTHER EVENTS!!!!!!
-			trigger(new NetPing(selfAddress, event.getContent().getPeer().getNode(),
-					new MembershipList<>(0), event.getContent().getDeadPingTimeout()), network);
+      // The indirect pong is sent back to the indirect pinger.
+      trigger(new NetIndirectPong(selfAddress, event.getSource(), 
+              new IndirectPong(event.getContent().getIndirectPingRequester(), 
+              self, event.getContent().getDeadPingTimeout())), network);
+    }
+  };
+  
+  private final Handler<NetIndirectPong> handleIndirectPong = new Handler<NetIndirectPong>() {
+
+    @Override
+    public void handle(NetIndirectPong event) {
+      trigger(new NetStopIndirectPing(selfAddress, event.getContent().getInitiatorPeer().getNode(),
+              new StopIndirectPing(event.getContent().getSuspectedPeer(), pingTimeoutId)), network);
+    }
+  };
+  
+  private final Handler<NetStopIndirectPing> handleStopIndirectPing = new Handler<NetStopIndirectPing>() {
+
+    @Override
+    public void handle(NetStopIndirectPing event) {
+      membershipList.getQueue().getList().stream()
+              .filter(x -> x.getPeer().equals(event.getContent().getSuspectedPeer()))
+              .findFirst().get()
+              .getPeer().setState(NodeState.ALIVE);
+      cancelDeadTimeout(event.getContent().getDeadPingTimeout(), event.getContent().getSuspectedPeer().getNode());
+    }
+  };
+  
+  private final Handler<DeadTimeout> handleDeatTimeout = new Handler<DeadTimeout>() {
+
+    @Override
+    public void handle(DeadTimeout event) {
+      log.info("Node {} declared peer {} DEAD", selfAddress.getId());
+      MembershipListItem dead = membershipList.getQueue().getList().stream()
+              .filter(x -> x.getPeer().equals(event.getDeadPeer()))
+              .findFirst().get();
+      
+      dead.getPeer().setState(NodeState.DEAD);
+      dead.resetInfectionTime();
     }
   };
   
@@ -274,12 +344,19 @@ public class SwimComp extends ComponentDefinition {
 		}
 
 	};
+  
+  private List<Peer> getAll(NodeState state) {
+    return membershipList.getQueue().getList().stream()
+            .map(x -> x.getPeer())
+            .filter(x -> x.getState().equals(state))
+            .collect(Collectors.toList());
+  }
 
 	// Ping timeout for Failure Detector
 	private UUID schedulePingTimeout(Peer destination) {
 		log.info("{} Setting PING FD timeout for node: {}", selfAddress,
 				destination);
-		ScheduleTimeout st = new ScheduleTimeout(20000);
+		ScheduleTimeout st = new ScheduleTimeout(1500);
 		PingFailureTimeout pft = new PingFailureTimeout(st, destination);
 		st.setTimeoutEvent(pft);
 		trigger(st, timer);
@@ -291,7 +368,7 @@ public class SwimComp extends ComponentDefinition {
 	private UUID scheduleDeadTimeout(Peer destination) {
 		log.info("{} Setting DEAD timeout for node: {}", selfAddress,
 				destination);
-		ScheduleTimeout st = new ScheduleTimeout(80000);
+		ScheduleTimeout st = new ScheduleTimeout(3000);
 		DeadTimeout dt = new DeadTimeout(st, destination);
 		st.setTimeoutEvent(dt);
 		trigger(st, timer);
@@ -390,7 +467,7 @@ public class SwimComp extends ComponentDefinition {
       this.peer = peer;
     }
     
-    public Peer getPeer() {
+    public Peer getDeadPeer() {
       return peer;
     }
   }
