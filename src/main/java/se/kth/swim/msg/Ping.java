@@ -27,11 +27,12 @@ import se.kth.swim.Peer;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class Ping {
+public class Ping extends MessageCounter {
 	private MembershipList<Peer> piggyback;
 	private UUID pingTimeoutUUID;
 	
-	public Ping(MembershipList<Peer> piggyback, UUID pingTimeoutUUID) {
+	public Ping(MembershipList<Peer> piggyback, UUID pingTimeoutUUID, Integer counter) {
+		super(counter);
 		this.piggyback = piggyback;
 		this.pingTimeoutUUID = pingTimeoutUUID;
 	}

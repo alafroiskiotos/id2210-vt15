@@ -21,11 +21,12 @@ package se.kth.swim.msg;
 import java.util.UUID;
 import se.kth.swim.Peer;
 
-public class StopIndirectPing {
+public class StopIndirectPing extends MessageCounter {
   private final Peer suspectedPeer;
   private final UUID deadPingTimeout;
   
-  public StopIndirectPing(Peer suspected, UUID timeout) {
+  public StopIndirectPing(Peer suspected, UUID timeout, Integer counter) {
+	  super(counter);
     this.suspectedPeer = suspected;
     this.deadPingTimeout = timeout;
   }

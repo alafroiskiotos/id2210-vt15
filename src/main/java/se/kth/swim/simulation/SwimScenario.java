@@ -73,8 +73,8 @@ public class SwimScenario {
 		Set<Pair<Integer, Integer>> deadLinks;
 
 		deadLinks = new HashSet<Pair<Integer, Integer>>();
-		deadLinks.add(Pair.with(10, 12));
-		deadLinks.add(Pair.with(12, 10));
+		deadLinks.add(Pair.with(10, 14));
+		deadLinks.add(Pair.with(14, 10));
 		deadLinksSets.put(1, deadLinks);
 
 		deadLinks = new HashSet<Pair<Integer, Integer>>();
@@ -298,8 +298,8 @@ public class SwimScenario {
 
 				startAggregator.start();
 				startPeers.startAfterTerminationOf(1000, startAggregator);
-				killPeers.startAfterTerminationOf(10000, startPeers);
-				// deadLinks1.startAfterTerminationOf(10000,startPeers);
+				//killPeers.startAfterTerminationOf(10000, startPeers);
+				deadLinks1.startAfterTerminationOf(1000,startPeers);
 				// disconnectedNodes1.startAfterTerminationOf(10000,
 				// startPeers);
 				fetchSimulationResult.startAfterTerminationOf(30 * 1000,

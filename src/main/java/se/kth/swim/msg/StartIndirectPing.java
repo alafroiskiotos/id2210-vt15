@@ -25,12 +25,13 @@ import se.kth.swim.Peer;
  *
  * @author lorenzocorneo
  */
-public class StartIndirectPing {
+public class StartIndirectPing extends MessageCounter {
   private final Peer suspectedPeer;
   private final Peer initiatorPeer;
 	private final UUID deadPingTimeout;
 	
-	public StartIndirectPing(Peer initiatorPeer, Peer suspectedPeer, UUID deadPingTimeout) {
+	public StartIndirectPing(Peer initiatorPeer, Peer suspectedPeer, UUID deadPingTimeout, Integer counter) {
+		super(counter);
 		this.suspectedPeer = suspectedPeer;
     this.initiatorPeer = initiatorPeer;
 		this.deadPingTimeout = deadPingTimeout;

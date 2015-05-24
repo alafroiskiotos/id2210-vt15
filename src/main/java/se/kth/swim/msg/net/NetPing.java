@@ -32,8 +32,8 @@ import se.sics.p2ptoolbox.util.network.NatedAddress;
  */
 public class NetPing extends NetMsg<Ping> {
 
-    public NetPing(NatedAddress src, NatedAddress dst, MembershipList<Peer> piggyback, UUID pingTimeoutUUID) {
-        super(src, dst, new Ping(piggyback, pingTimeoutUUID));
+    public NetPing(NatedAddress src, NatedAddress dst, MembershipList<Peer> piggyback, UUID pingTimeoutUUID, Integer counter) {
+        super(src, dst, new Ping(piggyback, pingTimeoutUUID, counter));
     }
 
     private NetPing(Header<NatedAddress> header, Ping content) {

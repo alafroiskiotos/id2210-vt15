@@ -10,8 +10,8 @@ import se.sics.p2ptoolbox.util.network.NatedAddress;
 
 public class NetPong extends NetMsg<Pong> {
 
-	public NetPong(NatedAddress src, NatedAddress dst, MembershipList<Peer> view, UUID pingTimeoutUUID) {
-        super(src, dst, new Pong(view, pingTimeoutUUID));
+	public NetPong(NatedAddress src, NatedAddress dst, MembershipList<Peer> view, UUID pingTimeoutUUID, Integer counter) {
+        super(src, dst, new Pong(view, pingTimeoutUUID, counter));
     }
 	
 	public NetPong(Header<NatedAddress> header, Pong content) {
