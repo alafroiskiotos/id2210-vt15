@@ -18,10 +18,6 @@ public class MembershipListItem {
 	public Integer getSequenceNumber() {
 		return sequenceNumber;
 	}
-  
-	public boolean causalAfter(Integer receivedSeqNum) {
-		return receivedSeqNum > sequenceNumber ? true : false;
-	}
 	
   public void resetInfectionTime() {
     infectionTime = 0;
@@ -37,6 +33,14 @@ public class MembershipListItem {
   
   public void setInfectionTime(int value) {
     infectionTime = value;
+  }
+  
+  public boolean causalAfter(Integer receivedSeqNum) {
+    return receivedSeqNum > sequenceNumber;
+  }
+
+  public void setSequenceNumber(Integer sequenceNumber) {
+    this.sequenceNumber = sequenceNumber;
   }
 	
 	@Override
