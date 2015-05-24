@@ -149,6 +149,7 @@ public class NatTraversalComp extends ComponentDefinition {
         public void handle(CroupierSample event) {
             log.info("{} croupier public nodes:{}", selfAddress.getBaseAdr(), event.publicSample);
             //use this to change parent in case it died
+            log.info("RECEIVED CROUPIER SAMPLE!!!");
         }
     };
     
