@@ -34,6 +34,10 @@ public class MembershipListItem {
 	public void incInfectionTime() {
 		infectionTime++;
 	}
+  
+  public void setInfectionTime(int value) {
+    infectionTime = value;
+  }
 	
 	@Override
 	public String toString() {

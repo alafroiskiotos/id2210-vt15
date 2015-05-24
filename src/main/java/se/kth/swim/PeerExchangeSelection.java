@@ -29,15 +29,27 @@ public class PeerExchangeSelection {
 		MembershipList<MembershipListItem> ret = new MembershipList<MembershipListItem>(
 				localView.getQueue().getMaxSize());
 
+    // ERROR: if we create a new membership list item the infection time is set to zero again!!!
 		for (Peer peer : receivedView.getQueue().getList()) {
-			ret.getQueue().push(new MembershipListItem(peer));
+      MembershipListItem mli = new MembershipListItem(peer);
+      
+      int index = localView.getQueue().getList().indexOf(mli);
+      
+      if(index >= 0) {
+        // Update the state of an already existing peer in the membership list.
+        mli.getPeer().setState(peer.getState());
+        mli.setInfectionTime(localView.getQueue().getElement(index).getInfectionTime());
+      }
+      
+      // Adds the peer to the membership list.
+        ret.getQueue().push(mli);
 		}
-
+    
 		Collections.sort(ret.getQueue().getList(),
 				new MembershipListStateSortPolicy(NodeState.DEAD));
 
 		for (MembershipListItem listItem : localView.getQueue().getList()) {
-			if (!ret.getQueue().contains(listItem)) {
+			if (!ret.getQueue().contains(listItem) && ret.getQueue().getQueueSize() <= ret.getQueue().getMaxSize()) {
 				ret.getQueue().push(listItem);
 			}
 		}
@@ -76,12 +88,11 @@ public class PeerExchangeSelection {
 				.getQueue().getMaxSize());
 
 		list.getQueue().getList().forEach(
-						x -> {
-							if (!x.getPeer().getState().equals(NodeState.DEAD) || (x.getInfectionTime() <= maxInfection)
-									&& x.getPeer().getState().equals(NodeState.DEAD)) {
-								ret.getQueue().push(x);
-							}
-						});
+      x -> {
+        if (x.getInfectionTime() <= maxInfection) {
+          ret.getQueue().push(x);
+        }
+      });
 
 		return ret;
 	}

@@ -63,7 +63,7 @@ public class SwimComp extends ComponentDefinition {
 
 	private static final Logger log = LoggerFactory.getLogger(SwimComp.class);
 	// λlogn times
-	private static final Integer INFECT_FACTOR = 2;
+	private static final Integer INFECT_FACTOR = 4;
 	private static final Integer MEMBERSHIP_SIZE = 10;
 	private static final Integer PIGGYBACK_SIZE = 1;
 	private static final Integer INDIRECT_PING_SIZE = 2;
@@ -184,9 +184,9 @@ public class SwimComp extends ComponentDefinition {
 		@Override
 		public void handle(NetPong event) {
 			UUID pingTimeoutID = event.getContent().getPingTimeoutUUID();
-			log.info("{} received PONG from: {} Timeout id: {}",
+			log.info("{} received PONG from: {} Partial view received {}",
 					new Object[] { selfAddress.getId(), event.getSource(),
-							pingTimeoutID.toString() });
+						 event.getContent().getView() });
 			cancelPingTimeout(pingTimeoutID, event.getSource());
 
 			// Merge received view with local
