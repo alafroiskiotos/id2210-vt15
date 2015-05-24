@@ -35,7 +35,7 @@ public class MembershipListItem {
     infectionTime = value;
   }
   
-  public boolean causalAfter(Integer receivedSeqNum) {
+  public boolean isCausal(Integer receivedSeqNum) {
     return receivedSeqNum > sequenceNumber;
   }
 
