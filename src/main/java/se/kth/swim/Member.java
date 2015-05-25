@@ -1,17 +1,17 @@
 package se.kth.swim;
 
-public class MembershipListItem {
+public class Member {
 	private final Peer peer;
-	private int infectionTime;
+	private Integer infectionTime;
 	private Integer sequenceNumber;
 	
-	public MembershipListItem(Peer peer) {
+	public Member(Peer peer) {
 		this.peer = peer;
 		this.infectionTime = 0;
 		this.sequenceNumber = 0;
 	}
 
-	public int getInfectionTime() {
+	public Integer getInfectionTime() {
 		return infectionTime;
 	}
 	
@@ -45,13 +45,13 @@ public class MembershipListItem {
 	
 	@Override
 	public String toString() {
-		return peer.getNode().toString() + ", InfectionTime -> " + infectionTime + ", STATE: " + peer.getState();
+  return "{" + peer.toString() + ",inf->" + infectionTime + "}";
 	}
 	
 	@Override
 	public boolean equals(Object other) {
-		if (other instanceof MembershipListItem) {
-			return this.getPeer().equals(((MembershipListItem) other).getPeer());
+		if (other instanceof Member) {
+			return this.getPeer().equals(((Member) other).getPeer());
 		}
 		
 		return false;

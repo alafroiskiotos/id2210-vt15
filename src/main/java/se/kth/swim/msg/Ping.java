@@ -19,25 +19,24 @@
 
 package se.kth.swim.msg;
 
+import java.util.List;
 import java.util.UUID;
-
-import se.kth.swim.MembershipList;
 import se.kth.swim.Peer;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class Ping extends MessageCounter {
-	private MembershipList<Peer> piggyback;
+	private List<Peer> piggyback;
 	private UUID pingTimeoutUUID;
 	
-	public Ping(MembershipList<Peer> piggyback, UUID pingTimeoutUUID, Integer counter) {
+	public Ping(List<Peer> piggyback, UUID pingTimeoutUUID, Integer counter) {
 		super(counter);
 		this.piggyback = piggyback;
 		this.pingTimeoutUUID = pingTimeoutUUID;
 	}
 	
-	public MembershipList<Peer> getPiggyback() {
+	public List<Peer> getPiggyback() {
 		return piggyback;
 	}
 

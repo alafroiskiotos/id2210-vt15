@@ -1,21 +1,20 @@
 package se.kth.swim.msg;
 
+import java.util.List;
 import java.util.UUID;
-
-import se.kth.swim.MembershipList;
 import se.kth.swim.Peer;
 
 public class Pong extends MessageCounter {
-	private final MembershipList<Peer> view;
+	private final List<Peer> view;
 	private final UUID pingTimeoutUUID;
 	
-	public Pong(MembershipList<Peer> view, UUID pingTimeoutUUID, Integer counter) {
+	public Pong(List<Peer> view, UUID pingTimeoutUUID, Integer counter) {
 		super(counter);
 		this.view = view;
 		this.pingTimeoutUUID = pingTimeoutUUID;
 	}
 	
-	public MembershipList<Peer> getView() {
+	public List<Peer> getView() {
 		return view;
 	}
 	

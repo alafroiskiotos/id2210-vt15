@@ -1,61 +1,102 @@
 package se.kth.swim;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
 
 public class PeerExchangeSelection {
-	public static MembershipList<Peer> getPeers(NatedAddress target,
-			MembershipList<MembershipListItem> list, int size) {
-		MembershipList<Peer> ret = new MembershipList<Peer>(size);
-		for (int i = 0; i < list.getQueue().getQueueSize()
-				&& ret.getQueue().getQueueSize() < size; i++) {
-			Peer item = list.getQueue().getElement(i).getPeer();
-			if (!item.getNode().getId().equals(target.getId())
-					&& !item.getState().equals(NodeState.SUSPECTED)) {
-				ret.getQueue().push(item);
-			}
-		}
-
-		return ret;
-	}
-
-	public static MembershipList<MembershipListItem> merge(
-			MembershipList<MembershipListItem> localView,
-			MembershipList<Peer> receivedView) {
-
-		MembershipList<MembershipListItem> ret = new MembershipList<MembershipListItem>(
-				localView.getQueue().getMaxSize());
-
-    // ERROR: if we create a new membership list item the infection time is set to zero again!!!
-		for (Peer peer : receivedView.getQueue().getList()) {
-      MembershipListItem mli = new MembershipListItem(peer);
-      
-      int index = localView.getQueue().getList().indexOf(mli);
-      
-      if(index >= 0) {
-        // Update the state of an already existing peer in the membership list.
-        mli.getPeer().setState(peer.getState());
-        mli.setInfectionTime(localView.getQueue().getElement(index).getInfectionTime());
-      }
-      
-      // Adds the peer to the membership list.
-        ret.getQueue().push(mli);
-		}
+  public static List<Peer> getPeers(List<Member> members, Integer size, Integer maxInfection) {
+    List<Peer> ret = new ArrayList<>();
     
-		Collections.sort(ret.getQueue().getList(),
-				new MembershipListStateSortPolicy(NodeState.DEAD));
+    List<Member> selectables = members.stream()
+      .filter(x -> x.getInfectionTime() <= maxInfection)
+      .collect(Collectors.toList());
+    
+    while(ret.size() < Math.min(selectables.size(), size)) {
+      ret.add(selectables.get(ret.size()).getPeer());
+    }
+    
+    return ret;
+  }
+  
+//	public static MembershipList<Peer> getPeers(NatedAddress target,
+//			MembershipList<MembershipListItem> list, int size) {
+//		MembershipList<Peer> ret = new MembershipList<>(size);
+//		for (int i = 0; i < list.getQueue().getQueueSize() && ret.getQueue().getQueueSize() < size; i++) {
+//			ret.getQueue().push(list.getQueue().getElement(i).getPeer());
+//		}
+//
+//		return ret;
+//	}
 
-		for (MembershipListItem listItem : localView.getQueue().getList()) {
-			if (!ret.getQueue().contains(listItem) && ret.getQueue().getQueueSize() <= ret.getQueue().getMaxSize()) {
-				ret.getQueue().push(listItem);
-			}
-		}
+	public static List<Member> merge(Peer self, List<Member> localView, List<Peer> receivedView) {
 
+		List<Member> ret = new ArrayList<>();
+    List<Peer> listViewPeers = localView.stream().map(y -> y.getPeer()).collect(Collectors.toList());
+    
+    receivedView.forEach(x -> {
+      if(x.equals(self)) {
+        // If the state is different and the incarnation less or equal...
+        if(!x.getState().equals(self.getState()) && x.getIncarnation() <= self.getIncarnation()) {
+          // ... we reset the infection (so we spread fresher info) and increase the incarnation
+          self.setIncarnation(x.getIncarnation() + 1);
+          ret.add(new Member(self));
+        }
+      } else if(listViewPeers.contains(x)) {
+        Peer peer = listViewPeers.get(listViewPeers.indexOf(x));
+        if(x.getState().equals(NodeState.ALIVE) && 
+          (peer.getState().equals(NodeState.SUSPECTED) || 
+            peer.getState().equals(NodeState.ALIVE)) &&
+            x.getIncarnation() > peer.getIncarnation()) {
+          // ...
+          ret.add(new Member(peer));
+        } else if(x.getState().equals(NodeState.SUSPECTED) && 
+          peer.getState().equals(NodeState.SUSPECTED) &&
+          x.getIncarnation() > peer.getIncarnation()) {
+          // ...
+          ret.add(new Member(peer));
+        } else if(x.getState().equals(NodeState.SUSPECTED) && 
+          peer.getState().equals(NodeState.ALIVE) &&
+          x.getIncarnation() >= peer.getIncarnation()) {
+          // ...
+          ret.add(new Member(peer));
+        } else if(x.getState().equals(NodeState.DEAD) && 
+          (peer.getState().equals(NodeState.ALIVE) || peer.getState().equals(NodeState.SUSPECTED))) {
+          // ...
+          ret.add(new Member(peer));
+        }
+      } else {
+        // If we don't have it in our members list we just add it.
+        ret.add(new Member(x));
+      }
+    });
+    
+    // Appends the rest of the members if they are not updated from the piggyback.
+    localView.forEach(x -> {
+      if(!ret.contains(x)) {
+        ret.add(x);
+      }
+    });
+
+    // Eventually it returns, hopefully.
 		return ret;
 	}
+  
+  /**
+   * Returns the list of peers selectable for being pinged (Not self, alive and suspected)
+   * @param self Peer that wants to invoke the ping.
+   * @param members Members list of the peer.
+   * @return List of peers eligible for ping.
+   */
+  public static List<Peer> getPingableTargets(Peer self, List<Member> members) {
+    return members.stream()
+				.filter(x -> !x.getPeer().equals(self) && 
+          (x.getPeer().getState().equals(NodeState.SUSPECTED) || 
+            x.getPeer().getState().equals(NodeState.ALIVE)))
+        .map(x -> x.getPeer())
+				.collect(Collectors.toList());
+  }
 
 	/**
 	 * Increments the infection time of the piggybacked nodes.
@@ -65,36 +106,12 @@ public class PeerExchangeSelection {
 	 * @param piggyback
 	 *            Piggybacked information received.
 	 */
-	public static void updateInfectionTime(
-			MembershipList<MembershipListItem> list,
-			MembershipList<Peer> piggyback) {
-		list.getQueue().getList().forEach(x -> {
-			if (piggyback.getQueue().getList().contains(x.getPeer())) {
+	public static void updateInfectionTime(List<Member> list, List<Peer> piggyback) {
+		list.forEach(x -> {
+			if (piggyback.contains(x.getPeer())) {
 				x.incInfectionTime();
 			}
 		});
-	}
-
-	/**
-	 * Sanitizes the list removing DEAD nodes.
-	 * 
-	 * @param list
-	 *            Membership list to sanitize.
-	 * @return A new membership list without DEAD nodes.
-	 */
-	public static MembershipList<MembershipListItem> sanitize(
-			MembershipList<MembershipListItem> list, Integer maxInfection) {
-		MembershipList<MembershipListItem> ret = new MembershipList<>(list
-				.getQueue().getMaxSize());
-
-		list.getQueue().getList().forEach(
-      x -> {
-        if (x.getInfectionTime() <= maxInfection) {
-          ret.getQueue().push(x);
-        }
-      });
-
-		return ret;
 	}
 
 	/**
@@ -106,31 +123,26 @@ public class PeerExchangeSelection {
 	 *            The maximum size of the returned membership list of peers.
 	 * @return Membership list of peers.
 	 */
-	public static MembershipList<Peer> getIndirectPingPeers(
-			MembershipList<MembershipListItem> list, int size) {
+	public static List<Peer> getIndirectPingPeers(List<Member> list, int size) {
 		// Returns a list of alive peers.
-		List<Peer> alivePeers = list.getQueue().getList().stream()
+		List<Peer> alivePeers = list.stream()
 				.filter(x -> x.getPeer().getState().equals(NodeState.ALIVE))
 				.map(x -> x.getPeer()).collect(Collectors.toList());
 
-		MembershipList<Peer> ret = new MembershipList<>(Math.min(size,
-				alivePeers.size()));
+		List<Peer> ret = new ArrayList<>();
 
 		Random r = new Random();
 
 		// Peers selection loop.
-		while (ret.getQueue().getQueueSize() < Math
-				.min(size, alivePeers.size())
-				&& ret.getQueue().getQueueSize() < list.getQueue()
-						.getQueueSize()) {
+		while (ret.size() < Math.min(size, alivePeers.size()) && ret.size() < list.size()) {
 
 			int rn = r.nextInt(Math.min(size, alivePeers.size()));
 
-			if (ret.getQueue().contains(alivePeers.get(rn))) {
+			if (ret.contains(alivePeers.get(rn))) {
 				continue;
 			}
 
-			ret.getQueue().push(alivePeers.get(rn));
+			ret.add(alivePeers.get(rn));
 		}
 
 		return ret;

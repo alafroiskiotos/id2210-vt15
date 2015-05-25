@@ -18,10 +18,9 @@
  */
 package se.kth.swim;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
@@ -65,18 +64,17 @@ public class SwimComp extends ComponentDefinition {
 	private static final Logger log = LoggerFactory.getLogger(SwimComp.class);
 	// λlogn times
 	private static final Integer INFECT_FACTOR = 4;
-	private static final Integer MEMBERSHIP_SIZE = 10;
 	private static final Integer PIGGYBACK_SIZE = 1;
 	private static final Integer INDIRECT_PING_SIZE = 2;
 	private Integer localSequenceNumber = 0;
 
 	private Positive<Network> network = requires(Network.class);
-	private Positive<Timer> timer = requires(Timer.class);
+	private final Positive<Timer> timer = requires(Timer.class);
 
 	private final NatedAddress selfAddress;
 	private final Set<NatedAddress> bootstrapNodes;
 	private final NatedAddress aggregatorAddress;
-	private MembershipList<MembershipListItem> membershipList;
+	private List<Member> members;
 	private final Peer self;
 
 	private UUID pingTimeoutId;
@@ -89,10 +87,12 @@ public class SwimComp extends ComponentDefinition {
 		log.info("{} initiating...", selfAddress);
 		this.bootstrapNodes = init.bootstrapNodes;
 		this.aggregatorAddress = init.aggregatorAddress;
-		this.membershipList = new MembershipList<MembershipListItem>(
-				MEMBERSHIP_SIZE);
+		this.members = new ArrayList<>();
 		this.self = new Peer(selfAddress, NodeState.ALIVE);
-
+    
+    // We add ourself and we spread us in the beginning.
+    members.add(new Member(self));
+    
 		subscribe(handleStart, control);
 		subscribe(handleStop, control);
 
@@ -109,19 +109,19 @@ public class SwimComp extends ComponentDefinition {
 		subscribe(handleStopIndirectPing, network);
 	}
 
-	private Handler<Start> handleStart = new Handler<Start>() {
+	private final Handler<Start> handleStart = new Handler<Start>() {
 
 		@Override
 		public void handle(Start event) {
 			log.info("{} starting...", new Object[] { selfAddress.getId() });
+      
+      self.setIncarnation(self.getIncarnation() + 1);
 
 			if (!bootstrapNodes.isEmpty()) {
 
 				// Add bootstrap nodes to local membership list
 				for (NatedAddress node : bootstrapNodes) {
-					membershipList.getQueue().push(
-							new MembershipListItem(new Peer(node,
-									NodeState.ALIVE)));
+					members.add(new Member(new Peer(node, NodeState.ALIVE)));
 					log.info("{} my bootstrap node: {}", selfAddress.getId(),
 							node);
 				}
@@ -129,9 +129,8 @@ public class SwimComp extends ComponentDefinition {
 			}
 			schedulePeriodicStatus();
 		}
-
 	};
-	private Handler<Stop> handleStop = new Handler<Stop>() {
+	private final Handler<Stop> handleStop = new Handler<Stop>() {
 
 		@Override
 		public void handle(Stop event) {
@@ -146,47 +145,43 @@ public class SwimComp extends ComponentDefinition {
 
 	};
 
-	private Handler<NetPing> handlePing = new Handler<NetPing>() {
+	private final Handler<NetPing> handlePing = new Handler<NetPing>() {
 
 		@Override
 		public void handle(NetPing event) {
 
-			if (isCausalOrNew(event.getSource().getId(), event.getContent()
-					.getCounter())) {
+			if (isCausalOrNew(event.getSource().getId(), event.getContent().getCounter())) {
 
 				log.info("{} received PING from:{}, {}", new Object[] {
 						selfAddress.getId(), event.getHeader().getSource() });
-				receivedPings++;
+				
+        receivedPings++;
 
 				log.info("{} Partial view received: {}", selfAddress.getId(),
 						event.getContent().getPiggyback());
 
 				// Create piggyback view
-				Collections.sort(membershipList.getQueue().getList(),
-						new MembershipListStateSortPolicy(NodeState.DEAD));
-				MembershipList<Peer> piggyback = PeerExchangeSelection
-						.getPeers(event.getSource(), membershipList,
-								PIGGYBACK_SIZE);
+				Collections.sort(members, new MembersInfectionSortPolicy());
+        
+				List<Peer> piggyback = PeerExchangeSelection.getPeers(members, PIGGYBACK_SIZE, INFECT_FACTOR);
 
 				// Increments the infection time of the piggybacked node's
-				PeerExchangeSelection.updateInfectionTime(membershipList,
-						piggyback);
+				PeerExchangeSelection.updateInfectionTime(members, piggyback);
 
-				log.info("{} Local membership list: {}", selfAddress.getId(),
-						membershipList);
-				Collections.sort(membershipList.getQueue().getList(),
-						new MembershipListInfectionSortPolicy());
-				log.info("{} Local membership list AFTER sorting: {}",
-						selfAddress.getId(), membershipList);
 
 				// Add the PING requester to the local view
-				MembershipList<Peer> receivedView = event.getContent()
-						.getPiggyback();
-				receivedView.getQueue().push(
-						new Peer(event.getSource(), NodeState.ALIVE));
+				List<Peer> receivedView = event.getContent().getPiggyback();
+				
+        // We consider also the source when we merge
+        // We don't need to store the pinger! We will get its entry from someone else
+        //receivedView.add(new Peer(event.getSource(), NodeState.ALIVE));
+        
 				// Merge received view with local
-				membershipList = PeerExchangeSelection.merge(membershipList,
-						receivedView);
+				members = PeerExchangeSelection.merge(self, members, receivedView);
+
+        log.info("{} Local membership list after PING merging: {}", selfAddress.getId(), members);
+        log.info("{} Respond with PONG to {} with view: {}", new Object[] {selfAddress.getId(),
+          event.getSource().getId(), piggyback});
 
 				localSequenceNumber++;
 
@@ -199,30 +194,29 @@ public class SwimComp extends ComponentDefinition {
 
 	};
 
-	private Handler<NetPong> handlePong = new Handler<NetPong>() {
+	private final Handler<NetPong> handlePong = new Handler<NetPong>() {
 
 		@Override
 		public void handle(NetPong event) {
 
-			if (isCausalOrNew(event.getSource().getId(), event.getContent()
-					.getCounter())) {
+			if (isCausalOrNew(event.getSource().getId(), event.getContent().getCounter())) {
 				UUID pingTimeoutID = event.getContent().getPingTimeoutUUID();
 				log.info("{} received PONG from: {} Partial view received {}",
 						new Object[] { selfAddress.getId(), event.getSource(),
 								event.getContent().getView() });
+        
 				cancelPingTimeout(pingTimeoutID, event.getSource());
 
 				// Merge received view with local
-				membershipList = PeerExchangeSelection.merge(membershipList,
-						event.getContent().getView());
+				members = PeerExchangeSelection.merge(self, members, event.getContent().getView());
 
-				log.info("{} Local MERGED membership list: {}",
-						selfAddress.getId(), membershipList);
+				log.info("{} Local after PONG MERGED membership list: {}",
+						selfAddress.getId(), members);
 			}
 		}
 	};
 
-	private Handler<PingTimeout> handlePingTimeout = new Handler<PingTimeout>() {
+	private final Handler<PingTimeout> handlePingTimeout = new Handler<PingTimeout>() {
 
 		@Override
 		public void handle(PingTimeout event) {
@@ -233,38 +227,29 @@ public class SwimComp extends ComponentDefinition {
 			 * NetPing(selfAddress, partnerAddress, "lalakoko"), network); }
 			 */
 
-			// Pick random peer to ping
-			// TODO round-robin selection
-			// Random rand = LauncherComp.scenario.getRandom();
 			Random rand = new Random();
-			List<Peer> alive = getAll(NodeState.ALIVE);
+			List<Peer> selectables = PeerExchangeSelection.getPingableTargets(self, members);
 
-			if (alive.size() != 0) {
-				Integer randInt = rand.nextInt(alive.size());
-				Peer peer = alive.get(randInt);
-				log.info("{} sending PING to node: {}", new Object[] {
-						selfAddress.getId(), peer.getNode() });
+			if (!selectables.isEmpty()) {
+				Integer randInt = rand.nextInt(selectables.size());
+				Peer peer = selectables.get(randInt);
+				
+        
 
 				// Schedule timeout for the Failure Detector
 				UUID pingTimeoutID = schedulePingTimeout(peer);
 
 				// Sort my partial view
-				Collections.sort(membershipList.getQueue().getList(),
-						new MembershipListStateSortPolicy(NodeState.DEAD));
+				Collections.sort(members, new MembersInfectionSortPolicy());
 
-				MembershipList<Peer> piggyback = PeerExchangeSelection
-						.getPeers(peer.getNode(), membershipList,
-								PIGGYBACK_SIZE);
+				List<Peer> piggyback = PeerExchangeSelection.getPeers(members, 	PIGGYBACK_SIZE, INFECT_FACTOR);
 
 				// Increments the infection time of the piggybacked node's
-				PeerExchangeSelection.updateInfectionTime(membershipList,
-						piggyback);
+				PeerExchangeSelection.updateInfectionTime(members, piggyback);
 
-				membershipList = PeerExchangeSelection.sanitize(membershipList,
-						INFECT_FACTOR);
-
-				log.info("{} membership list after PING: {}", new Object[] {
-						selfAddress.getId(), membershipList });
+        log.info("{} sending PING to node: {}. View Sending: {}", new Object[] {
+          selfAddress.getId(),peer.getNode(), piggyback });
+				
 
 				localSequenceNumber++;
 
@@ -275,7 +260,7 @@ public class SwimComp extends ComponentDefinition {
 		}
 	};
 
-	private Handler<PingFailureTimeout> handlePingFailure = new Handler<PingFailureTimeout>() {
+	private final Handler<PingFailureTimeout> handlePingFailure = new Handler<PingFailureTimeout>() {
 
 		@Override
 		public void handle(PingFailureTimeout event) {
@@ -283,47 +268,35 @@ public class SwimComp extends ComponentDefinition {
 			log.info("{} Did NOT received pong message from: {}", selfAddress,
 					event.getPeer());
 
-			int index = membershipList.getQueue().getList()
-					.indexOf(new MembershipListItem(event.getPeer()));
+			int index = members.indexOf(new Member(event.getPeer()));
 
 			if (index >= 0) {
-				membershipList.getQueue().getList().get(index).getPeer()
-						.setState(NodeState.SUSPECTED);
+				members.get(index).getPeer().setState(NodeState.SUSPECTED);
 				log.info("SUSPECTED -> " + event.getPeer().toString());
 
 				// Random peer selection for indirect ping
-				MembershipList<Peer> randomPeers = PeerExchangeSelection
-						.getIndirectPingPeers(membershipList,
-								INDIRECT_PING_SIZE);
+				List<Peer> randomPeers = PeerExchangeSelection.getIndirectPingPeers(members, INDIRECT_PING_SIZE);
 
-				if (randomPeers.getQueue().getQueueSize() > 0) {
+				if (randomPeers.size() > 0) {
 					// Set a new timeout -> DEAD timeout
 					UUID uuid = scheduleDeadTimeout(event.getPeer());
 
 					localSequenceNumber++;
 
 					// Indirect ping
-					randomPeers
-							.getQueue()
-							.getList()
-							.forEach(
-									x -> {
-										trigger(new NetStartIndirectPing(
-												selfAddress, x.getNode(),
-												new StartIndirectPing(self,
-														event.getPeer(), uuid,
-														localSequenceNumber)),
-												network);
-										log.info(
-												"Receiver of Indirect Ping is peer: {}",
-												x.getNode().getId());
-									});
+					randomPeers.forEach(
+            x -> {
+              trigger(new NetStartIndirectPing(selfAddress, x.getNode(),
+                  new StartIndirectPing(self, event.getPeer(), uuid, localSequenceNumber)),
+                network);
+              
+              log.info("Receiver of Indirect Ping is peer: {}", x.getNode().getId());
+          });
 				}
-				log.info("MALAKIA");
 			}
 
 			log.info("{} membership list after PING FAILURE TIMEOUT: {}",
-					new Object[] { selfAddress.getId(), membershipList });
+					new Object[] { selfAddress.getId(), members });
 		}
 	};
 
@@ -396,12 +369,8 @@ public class SwimComp extends ComponentDefinition {
 				log.info("Node {} received STOP INDIRECT PING for node {}",
 						new Object[] { selfAddress.getId(),
 								event.getContent().getSuspectedPeer() });
-				Optional<MembershipListItem> tmpPeer = membershipList
-						.getQueue()
-						.getList()
-						.stream()
-						.filter(x -> x.getPeer().equals(
-								event.getContent().getSuspectedPeer()))
+				Optional<Member> tmpPeer = members.stream()
+						.filter(x -> x.getPeer().equals(event.getContent().getSuspectedPeer()))
 						.findFirst();
 
 				if (tmpPeer.isPresent()) {
@@ -421,8 +390,8 @@ public class SwimComp extends ComponentDefinition {
 		public void handle(DeadTimeout event) {
 			log.info("Node {} declared peer DEAD with timeout ID {}",
 					new Object[] { selfAddress.getId(), event.getTimeoutId() });
-			MembershipListItem dead = membershipList.getQueue().getList()
-					.stream()
+			
+      Member dead = members.stream()
 					.filter(x -> x.getPeer().equals(event.getDeadPeer()))
 					.findFirst().get();
 
@@ -431,7 +400,7 @@ public class SwimComp extends ComponentDefinition {
 		}
 	};
 
-	private Handler<StatusTimeout> handleStatusTimeout = new Handler<StatusTimeout>() {
+	private final Handler<StatusTimeout> handleStatusTimeout = new Handler<StatusTimeout>() {
 
 		@Override
 		public void handle(StatusTimeout event) {
@@ -443,27 +412,16 @@ public class SwimComp extends ComponentDefinition {
 
 	};
 
-	private List<Peer> getAll(NodeState state) {
-		return membershipList.getQueue().getList().stream()
-				.map(x -> x.getPeer()).filter(x -> x.getState().equals(state))
-				.collect(Collectors.toList());
-	}
-
 	// Execute only if the source is a new node or
 	// if the sequence number of the message is larger
 	// than the last we have seen for that node
 	private boolean isCausalOrNew(Integer peerId, Integer peerCounter) {
-		Optional<MembershipListItem> tmpPeer = membershipList.getQueue()
-				.getList().stream()
+		Optional<Member> tmpPeer = members.stream()
 				.filter(x -> x.getPeer().getNode().getId().equals(peerId))
 				.findFirst();
 
-		if (!tmpPeer.isPresent()
-				|| (tmpPeer.isPresent() && tmpPeer.get().isCausal(peerCounter))) {
-			return true;
-		}
-
-		return false;
+		return !tmpPeer.isPresent() || 
+      (tmpPeer.isPresent() && tmpPeer.get().isCausal(peerCounter));
 	}
 
 	// Ping timeout for Failure Detector
