@@ -20,16 +20,6 @@ public class PeerExchangeSelection {
     return ret;
   }
   
-//	public static MembershipList<Peer> getPeers(NatedAddress target,
-//			MembershipList<MembershipListItem> list, int size) {
-//		MembershipList<Peer> ret = new MembershipList<>(size);
-//		for (int i = 0; i < list.getQueue().getQueueSize() && ret.getQueue().getQueueSize() < size; i++) {
-//			ret.getQueue().push(list.getQueue().getElement(i).getPeer());
-//		}
-//
-//		return ret;
-//	}
-
 	public static List<Member> merge(Peer self, List<Member> localView, List<Peer> receivedView) {
 
 		List<Member> ret = new ArrayList<>();
@@ -38,13 +28,14 @@ public class PeerExchangeSelection {
     receivedView.forEach(x -> {
       if(x.equals(self)) {
         // If the state is different and the incarnation less or equal...
-        if(!x.getState().equals(self.getState()) && x.getIncarnation() <= self.getIncarnation()) {
+        if(!x.getState().equals(NodeState.ALIVE) /*&& x.getIncarnation() <= self.getIncarnation()*/) {
           // ... we reset the infection (so we spread fresher info) and increase the incarnation
+          self.setState(NodeState.ALIVE);
           self.setIncarnation(x.getIncarnation() + 1);
         } 
         
         ret.add(new Member(self));
-      } else if(listViewPeers.contains(x)) {
+      } else if(listViewPeers.contains(x) && !x.equals(self)) {
         Peer peer = listViewPeers.get(listViewPeers.indexOf(x));
         if(x.getState().equals(NodeState.ALIVE) && 
           (peer.getState().equals(NodeState.SUSPECTED) || 

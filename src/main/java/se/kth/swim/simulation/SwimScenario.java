@@ -262,8 +262,8 @@ public class SwimScenario {
 						eventInterArrivalTime(constant(1000));
 						//raise(10, startNodeOp, new GenIntSequentialDistribution(
 						//		new Integer[] {2, 3, 4, 5, 6, 7, 8, 9, 10, 11}));
-						raise(4, startNodeOp, new GenIntSequentialDistribution(
-								new Integer[] {10, 13, 16, 18}));
+						raise(6, startNodeOp, new GenIntSequentialDistribution(
+								new Integer[] {10, 13, 16, 18, 22, 23}));
 					}
 				};
 
