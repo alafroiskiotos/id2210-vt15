@@ -37,14 +37,21 @@ import se.kth.swim.msg.Status;
 import se.kth.swim.msg.StopIndirectPing;
 import se.kth.swim.msg.net.NetIndirectPing;
 import se.kth.swim.msg.net.NetIndirectPong;
+import se.kth.swim.msg.net.NetNatQueryAliveRequest;
+import se.kth.swim.msg.net.NetNatQueryAliveResponse;
 import se.kth.swim.msg.net.NetPing;
 import se.kth.swim.msg.net.NetPong;
 import se.kth.swim.msg.net.NetStartIndirectPing;
 import se.kth.swim.msg.net.NetStatus;
 import se.kth.swim.msg.net.NetStopIndirectPing;
+import se.kth.swim.nat.events.NatPort;
+import se.kth.swim.nat.events.NatRequest;
+import se.kth.swim.nat.events.NatResponse;
+import se.kth.swim.nat.events.NatUpdate;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
+import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
@@ -70,13 +77,14 @@ public class SwimComp extends ComponentDefinition {
 
 	private Positive<Network> network = requires(Network.class);
 	private final Positive<Timer> timer = requires(Timer.class);
+  private Positive<NatPort> nat = requires(NatPort.class);
 
 	private final NatedAddress selfAddress;
 	private final Set<NatedAddress> bootstrapNodes;
 	private final NatedAddress aggregatorAddress;
 	private List<Member> members;
 	private final Peer self;
-
+  
 	private UUID pingTimeoutId;
 	private UUID statusTimeoutId;
 
@@ -107,6 +115,9 @@ public class SwimComp extends ComponentDefinition {
 		subscribe(handleIndirectPing, network);
 		subscribe(handleIndirectPong, network);
 		subscribe(handleStopIndirectPing, network);
+    
+    subscribe(handleNatRequest, nat);
+    subscribe(handleNatUpdate, nat);
 	}
 
 	private final Handler<Start> handleStart = new Handler<Start>() {
@@ -401,7 +412,6 @@ public class SwimComp extends ComponentDefinition {
 	};
 
 	private final Handler<StatusTimeout> handleStatusTimeout = new Handler<StatusTimeout>() {
-
 		@Override
 		public void handle(StatusTimeout event) {
 			log.info("{} sending status to aggregator:{}", new Object[] {
@@ -409,8 +419,40 @@ public class SwimComp extends ComponentDefinition {
 			trigger(new NetStatus(selfAddress, aggregatorAddress, new Status(
 					receivedPings)), network);
 		}
-
 	};
+  
+  private final Handler<NatRequest> handleNatRequest = new Handler<NatRequest>() {
+    @Override
+    public void handle(NatRequest event) {
+      System.out.println("RECIEVED MESSAGE!!!");
+      List<Integer> alives = members.stream()
+        .filter(x -> x.getPeer().getState().equals(NodeState.ALIVE))
+        .map(x -> x.getPeer().getNode().getId())
+        .collect(Collectors.toList());
+      
+      List<NatedAddress> ret = event.getParents().stream()
+        .filter(x -> alives.contains(x.getId()))
+        .collect(Collectors.toList());
+      
+      StringBuilder sb = new StringBuilder();
+      sb.append("{"); 
+      event.getParents().forEach(x -> sb.append(",").append(x.getId()));
+      sb.append("}");
+      
+      log.info("Node {} requires check for {}", new Object[]{selfAddress.getId(), sb.toString()});
+      
+      trigger(new NatResponse(ret), nat);
+    }
+};
+  
+  private final Handler<NatUpdate> handleNatUpdate = new Handler<NatUpdate>() {
+    @Override
+    public void handle(NatUpdate event) {
+      members.stream()
+        .filter(x -> x.getPeer().equals(self))
+        .findFirst().get().setInfectionTime(0);
+    }
+  };
 
 	// Execute only if the source is a new node or
 	// if the sequence number of the message is larger

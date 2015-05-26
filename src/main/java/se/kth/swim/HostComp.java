@@ -27,6 +27,7 @@ import se.kth.swim.croupier.CroupierComp;
 import se.kth.swim.croupier.CroupierConfig;
 import se.kth.swim.croupier.CroupierPort;
 import se.kth.swim.croupier.util.OverlayFilter;
+import se.kth.swim.nat.events.NatPort;
 import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
@@ -72,6 +73,8 @@ public class HostComp extends ComponentDefinition {
         swim = create(SwimComp.class, new SwimComp.SwimInit(selfAddress, init.bootstrapNodes, init.aggregatorAddress));
         connect(swim.getNegative(Timer.class), timer);
         connect(swim.getNegative(Network.class), nat.getPositive(Network.class));
+        // Remove also this line!
+        connect(swim.getNegative(NatPort.class), nat.getPositive(NatPort.class));
     }
     
     private Handler<Start> handleStart = new Handler<Start>() {

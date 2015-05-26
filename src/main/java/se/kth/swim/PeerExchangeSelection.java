@@ -41,8 +41,9 @@ public class PeerExchangeSelection {
         if(!x.getState().equals(self.getState()) && x.getIncarnation() <= self.getIncarnation()) {
           // ... we reset the infection (so we spread fresher info) and increase the incarnation
           self.setIncarnation(x.getIncarnation() + 1);
-          ret.add(new Member(self));
-        }
+        } 
+        
+        ret.add(new Member(self));
       } else if(listViewPeers.contains(x)) {
         Peer peer = listViewPeers.get(listViewPeers.indexOf(x));
         if(x.getState().equals(NodeState.ALIVE) && 

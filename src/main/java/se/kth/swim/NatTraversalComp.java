@@ -33,6 +33,12 @@ import se.kth.swim.croupier.CroupierPort;
 import se.kth.swim.croupier.msg.CroupierSample;
 import se.kth.swim.croupier.util.Container;
 import se.kth.swim.msg.net.NetMsg;
+import se.kth.swim.msg.net.NetNatQueryAliveRequest;
+import se.kth.swim.msg.net.NetNatQueryAliveResponse;
+import se.kth.swim.nat.events.NatPort;
+import se.kth.swim.nat.events.NatRequest;
+import se.kth.swim.nat.events.NatResponse;
+import se.kth.swim.nat.events.NatUpdate;
 import se.kth.swim.nat.msg.NetNatPing;
 import se.kth.swim.nat.msg.NetNatPong;
 import se.sics.kompics.ComponentDefinition;
@@ -71,6 +77,7 @@ public class NatTraversalComp extends ComponentDefinition {
 	private Positive<Network> network = requires(Network.class);
 	private Positive<CroupierPort> croupier = requires(CroupierPort.class);
 	private Positive<Timer> timer = requires(Timer.class);
+  private Negative<NatPort> nat = provides(NatPort.class);
 
 	private NatedAddress selfAddress;
 	private final Random rand;
@@ -102,6 +109,8 @@ public class NatTraversalComp extends ComponentDefinition {
 		subscribe(handleIncomingMsg, network);
 		subscribe(handleNatPing, network);
 		subscribe(handleNatPong, network);
+    
+    subscribe(handleNatResponse, nat);
 	}
 
 	private Handler<Start> handleStart = new Handler<Start>() {
@@ -281,29 +290,53 @@ public class NatTraversalComp extends ComponentDefinition {
 			sentHeartBeats.clear();
 
 			// Set new parents
-			Set<NatedAddress> newParents = new HashSet<NatedAddress>(
+			List<NatedAddress> newParents = new ArrayList<>(
 					sample.subList(0, Math.min(sample.size(), PARENTS_SIZE + 1)));
 			
+      // For newParents, query Swim for alive nodes
+      // return alive subset
 			for (NatedAddress natedAddress : newParents) {
 				System.out.println("New parents: " + natedAddress);
 			}
 			
 			// Build new self address
-			selfAddress = new BasicNatedAddress(new BasicAddress(
-					selfAddress.getIp(), 1234, selfAddress.getId()),
-					NatType.NAT, newParents);
-			
-			log.info("Node {} Created new SELF REFERENCE! parents are: {}", selfAddress.getId(), selfAddress.getParents());
+			//selfAddress = new BasicNatedAddress(new BasicAddress(
+			//		selfAddress.getIp(), 1234, selfAddress.getId()),
+			//		NatType.NAT, newParents);
+      
+      //trigger(new NetNatQueryAliveRequest(selfAddress, selfAddress, newParents), network);
+      trigger(new NatRequest(newParents), nat);
 		}
 	};
-
+  
+  private final Handler<NatResponse> handleNatResponse = new Handler<NatResponse>() {
+    @Override
+    public void handle(NatResponse event) {
+      selfAddress.getParents().clear();
+      
+      event.getParents()
+        .forEach(x -> selfAddress.getParents().add(x));
+      
+      log.info("Node {} Created new SELF REFERENCE! parents are: {}", selfAddress.getId(), selfAddress.getParents());
+      
+      StringBuilder sb = new StringBuilder();
+      sb.append("{"); 
+      event.getParents().forEach(x -> sb.append(",").append(x.getId()));
+      sb.append("}");
+      
+      log.info("Node {} sent new parents for {}", new Object[]{selfAddress.getId(), sb.toString()});
+      
+      trigger(new NatUpdate(), nat);
+    }
+  };
+  
 	private Handler handleCroupierSample = new Handler<CroupierSample>() {
 		@Override
 		public void handle(CroupierSample event) {
 			log.info("{} croupier public nodes:{}", selfAddress.getBaseAdr(),
 					event.publicSample);
 			// use this to change parent in case it died
-			log.info("RECEIVED CROUPIER SAMPLE!!!");
+			log.info("Node {} RECEIVED CROUPIER SAMPLE!!!", selfAddress.getId());
 			sample.clear();
 
 			Iterator<Container<NatedAddress, Object>> iter = event.publicSample
