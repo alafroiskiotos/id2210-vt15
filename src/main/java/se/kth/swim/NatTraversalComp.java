@@ -19,7 +19,6 @@
 package se.kth.swim;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -33,8 +32,6 @@ import se.kth.swim.croupier.CroupierPort;
 import se.kth.swim.croupier.msg.CroupierSample;
 import se.kth.swim.croupier.util.Container;
 import se.kth.swim.msg.net.NetMsg;
-import se.kth.swim.msg.net.NetNatQueryAliveRequest;
-import se.kth.swim.msg.net.NetNatQueryAliveResponse;
 import se.kth.swim.nat.events.NatPort;
 import se.kth.swim.nat.events.NatRequest;
 import se.kth.swim.nat.events.NatResponse;
@@ -55,10 +52,7 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.p2ptoolbox.util.network.NatType;
 import se.sics.p2ptoolbox.util.network.NatedAddress;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
-import se.sics.p2ptoolbox.util.network.impl.BasicNatedAddress;
 import se.sics.p2ptoolbox.util.network.impl.RelayHeader;
 import se.sics.p2ptoolbox.util.network.impl.SourceHeader;
 

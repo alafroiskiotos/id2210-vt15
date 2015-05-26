@@ -16,29 +16,50 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.kth.swim.msg.net;
+package se.kth.swim.scenario;
 
+import java.util.ArrayList;
 import java.util.List;
-import se.kth.swim.nat.msg.NatQueryAlive;
-import se.sics.kompics.network.Header;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
 
 /**
  *
  * @author lorenzocorneo
  */
-public class NetNatQueryAliveRequest extends NetMsg<NatQueryAlive> {
+public abstract class AbstractNodesBuilder implements NodesBuilder{
+  protected Integer size;
+  protected List<Integer> nated, open;
+  
+  public AbstractNodesBuilder(Integer size) {
+    this.size = size;
+    this.open = new ArrayList<>();
+    this.nated = new ArrayList<>();
+    
+    this.buildNodes();
+  }
+  
+  private void buildNodes() {
+    generate();
+  }
+  
+  protected abstract void generate();
+  
+  @Override
+  public Integer[] getOpenNodes() {
+    return arrayListToArray(open);
+  }
 
-	public NetNatQueryAliveRequest(NatedAddress src, NatedAddress dst, List<NatedAddress> parents) {
-        super(src, dst, new NatQueryAlive(parents));
+  @Override
+  public Integer[] getNatedNodes() {
+    return arrayListToArray(nated);
+  }
+  
+  private Integer[] arrayListToArray(List<Integer> list) {
+    Integer[] ret = new Integer[list.size()];
+    
+    for(int i = 0; i < list.size(); i++) {
+      ret[i] = list.get(i);
     }
-	
-	public NetNatQueryAliveRequest(Header<NatedAddress> header, NatQueryAlive content) {
-		super(header, content);
-	}
-
-	@Override
-	public NetMsg copyMessage(Header<NatedAddress> newHeader) {
-		return new NetNatQueryAliveRequest(newHeader, getContent());
-	}
+    
+    return ret;
+  }
 }

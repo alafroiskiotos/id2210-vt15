@@ -16,29 +16,29 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.kth.swim.msg.net;
+package se.kth.swim.scenario;
 
-import java.util.List;
-import se.kth.swim.nat.msg.NatQueryAlive;
-import se.sics.kompics.network.Header;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import java.util.Random;
 
 /**
  *
  * @author lorenzocorneo
  */
-public class NetNatQueryAliveResponse extends NetMsg<NatQueryAlive> {
+public class RandomNodeBuilder extends AbstractNodesBuilder{
+  public RandomNodeBuilder(Integer size) {
+    super(size);
+  }
 
-	public NetNatQueryAliveResponse(NatedAddress src, NatedAddress dst, List<NatedAddress> parents) {
-        super(src, dst, new NatQueryAlive(parents));
+  @Override
+  protected void generate() {
+    Random r = new Random();
+    
+    for(int i = 0; i < size; i++) {
+      if(r.nextInt(2) == 0) {
+        open.add(i);
+      } else {
+        nated.add(i);
+      }
     }
-	
-	public NetNatQueryAliveResponse(Header<NatedAddress> header, NatQueryAlive content) {
-		super(header, content);
-	}
-
-	@Override
-	public NetMsg copyMessage(Header<NatedAddress> newHeader) {
-		return new NetNatQueryAliveResponse(newHeader, getContent());
-	} 
+  }
 }
