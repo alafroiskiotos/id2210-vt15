@@ -41,6 +41,9 @@ public class AggregatorComp extends ComponentDefinition {
     private Positive<Timer> timer = requires(Timer.class);
 
     private final NatedAddress selfAddress;
+    
+    private int previousDead;
+    private long start, stop;
 
     public AggregatorComp(AggregatorInit init) {
         this.selfAddress = init.selfAddress;
@@ -72,8 +75,25 @@ public class AggregatorComp extends ComponentDefinition {
 
         @Override
         public void handle(NetStatus status) {
-            log.info("{} status from:{} pings:{}", 
-                    new Object[]{selfAddress.getId(), status.getHeader().getSource(), status.getContent().receivedPings});
+            log.info("{} status from:{} pings:{}, alive:{}, dead:{}", 
+                    new Object[]{selfAddress.getId(), status.getHeader().getSource(), 
+                      status.getContent().getReceivedPings(), status.getContent().getAliveNodes(),
+                    status.getContent().getDeadNodes()});
+            
+            if(previousDead == 0 && status.getContent().getDeadNodes() == 1) {
+              start = System.currentTimeMillis();
+            }
+            
+            if(previousDead == status.getContent().getAliveNodes() -1 &&
+              previousDead == status.getContent().getAliveNodes()) {
+              stop = System.currentTimeMillis();
+            }
+            
+            if(start > 0 && stop > 0) {
+              log.info("CONVERGENCE in {} ms!", stop - start);
+            }
+            
+            previousDead = status.getContent().getDeadNodes();
         }
     };
 
