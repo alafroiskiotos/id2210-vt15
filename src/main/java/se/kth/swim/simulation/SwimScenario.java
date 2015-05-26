@@ -266,6 +266,14 @@ public class SwimScenario {
 								new Integer[] {10, 13, 16, 18, 22, 23}));
 					}
 				};
+        
+        StochasticProcess startNewPeer = new StochasticProcess() {
+					{
+						eventInterArrivalTime(constant(1000));
+						raise(1, startNodeOp, new GenIntSequentialDistribution(
+								new Integer[] {4}));
+					}
+				};
 
         // start Peer 10 again
         StochasticProcess startPeerAgain = new StochasticProcess() {
@@ -312,6 +320,7 @@ public class SwimScenario {
 				startAggregator.start();
 				startPeers.startAfterTerminationOf(1000, startAggregator);
 				killPeers.startAfterTerminationOf(5000, startPeers);
+        startNewPeer.startAfterTerminationOf(1000, killPeers);
 				//startPeerAgain.startAfterTerminationOf(7000, killPeers);
         		//deadLinks1.startAfterTerminationOf(1000,startPeers);
 				//disconnectedNodes1.startAfterTerminationOf(10000, startPeers);

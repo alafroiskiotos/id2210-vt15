@@ -321,7 +321,7 @@ public class NatTraversalComp extends ComponentDefinition {
       
       StringBuilder sb = new StringBuilder();
       sb.append("{"); 
-      event.getParents().forEach(x -> sb.append(",").append(x.getId()));
+      event.getParents().forEach(x -> sb.append(x.getId()).append(","));
       sb.append("}");
       
       log.info("Node {} sent new parents for {}", new Object[]{selfAddress.getId(), sb.toString()});

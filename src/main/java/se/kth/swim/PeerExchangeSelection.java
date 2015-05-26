@@ -35,7 +35,7 @@ public class PeerExchangeSelection {
         } 
         
         ret.add(new Member(self));
-      } else if(listViewPeers.contains(x) && !x.equals(self)) {
+      } else if(listViewPeers.contains(x)) {
         Peer peer = listViewPeers.get(listViewPeers.indexOf(x));
         if(x.getState().equals(NodeState.ALIVE) && 
           (peer.getState().equals(NodeState.SUSPECTED) || 
