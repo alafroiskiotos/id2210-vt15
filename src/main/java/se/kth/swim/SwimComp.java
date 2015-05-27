@@ -81,6 +81,7 @@ public class SwimComp extends ComponentDefinition {
 	private final NatedAddress aggregatorAddress;
 	private List<Member> members;
 	private final Peer self;
+	private final Random rand;
   
 	private UUID pingTimeoutId;
 	private UUID statusTimeoutId;
@@ -92,6 +93,7 @@ public class SwimComp extends ComponentDefinition {
 		log.info("{} initiating...", selfAddress);
 		this.bootstrapNodes = init.bootstrapNodes;
 		this.aggregatorAddress = init.aggregatorAddress;
+		this.rand = new Random(init.getSeed());
 		this.members = new ArrayList<>();
 		this.self = new Peer(selfAddress, NodeState.ALIVE);
     
@@ -235,7 +237,6 @@ public class SwimComp extends ComponentDefinition {
 			 * NetPing(selfAddress, partnerAddress, "lalakoko"), network); }
 			 */
 
-			Random rand = new Random();
 			List<Peer> selectables = PeerExchangeSelection.getPingableTargets(self, members);
 
 			if (!selectables.isEmpty()) {
@@ -283,7 +284,7 @@ public class SwimComp extends ComponentDefinition {
 				log.info("SUSPECTED -> " + event.getPeer().toString());
 
 				// Random peer selection for indirect ping
-				List<Peer> randomPeers = PeerExchangeSelection.getIndirectPingPeers(members, INDIRECT_PING_SIZE);
+				List<Peer> randomPeers = PeerExchangeSelection.getIndirectPingPeers(members, INDIRECT_PING_SIZE, rand);
 
 				if (randomPeers.size() > 0) {
 					// Set a new timeout -> DEAD timeout
@@ -543,12 +544,18 @@ public class SwimComp extends ComponentDefinition {
 		public final NatedAddress selfAddress;
 		public final Set<NatedAddress> bootstrapNodes;
 		public final NatedAddress aggregatorAddress;
+		private final long seed;
 
 		public SwimInit(NatedAddress selfAddress,
-				Set<NatedAddress> bootstrapNodes, NatedAddress aggregatorAddress) {
+				Set<NatedAddress> bootstrapNodes, NatedAddress aggregatorAddress, long seed) {
 			this.selfAddress = selfAddress;
 			this.bootstrapNodes = bootstrapNodes;
 			this.aggregatorAddress = aggregatorAddress;
+			this.seed = seed;
+		}
+		
+		public long getSeed() {
+			return seed;
 		}
 	}
 

@@ -115,7 +115,7 @@ public class PeerExchangeSelection {
 	 *            The maximum size of the returned membership list of peers.
 	 * @return Membership list of peers.
 	 */
-	public static List<Peer> getIndirectPingPeers(List<Member> list, int size) {
+	public static List<Peer> getIndirectPingPeers(List<Member> list, int size, Random rand) {
 		// Returns a list of alive peers.
 		List<Peer> alivePeers = list.stream()
 				.filter(x -> x.getPeer().getState().equals(NodeState.ALIVE))
@@ -123,12 +123,11 @@ public class PeerExchangeSelection {
 
 		List<Peer> ret = new ArrayList<>();
 
-		Random r = new Random();
 
 		// Peers selection loop.
 		while (ret.size() < Math.min(size, alivePeers.size()) && ret.size() < list.size()) {
 
-			int rn = r.nextInt(Math.min(size, alivePeers.size()));
+			int rn = rand.nextInt(Math.min(size, alivePeers.size()));
 
 			if (ret.contains(alivePeers.get(rn))) {
 				continue;

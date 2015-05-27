@@ -33,13 +33,11 @@ public class NumberNodeBuilder extends AbstractNodesBuilder {
 	  // Node ID 0 explicitly assigned to Aggregator Component
     // Open nodes generation.
     for(int i = 1; i < size + 1 - natedSize; i++) {
-    	System.out.println("OPEN: " + i);
       open.add(i);
     }
     
     // Nated nodes generation.
     for(int i = size +1  - natedSize; i < size + 1; i++) {
-    	System.out.println("NAT: " + i);
       nated.add(i);
     }
   } 
