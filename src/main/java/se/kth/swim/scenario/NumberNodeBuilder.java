@@ -27,6 +27,7 @@ public class NumberNodeBuilder extends AbstractNodesBuilder {
   
   public NumberNodeBuilder(int size, int nated) {
     super(size);
+    natedNodes = nated;
   }
   
   @Override
