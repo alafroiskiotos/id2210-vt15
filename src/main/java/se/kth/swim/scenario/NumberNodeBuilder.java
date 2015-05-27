@@ -23,22 +23,23 @@ package se.kth.swim.scenario;
  * @author lorenzocorneo
  */
 public class NumberNodeBuilder extends AbstractNodesBuilder {
-  private int natedNodes;
   
-  public NumberNodeBuilder(int size, int nated) {
-    super(size);
-    natedNodes = nated;
+  public NumberNodeBuilder(int size, int natedSize) {
+    super(size, natedSize);
   }
   
   @Override
   protected void generate() {
+	  // Node ID 0 explicitly assigned to Aggregator Component
     // Open nodes generation.
-    for(int i = 0; i < size - natedNodes; i++) {
+    for(int i = 1; i < size + 1 - natedSize; i++) {
+    	System.out.println("OPEN: " + i);
       open.add(i);
     }
     
     // Nated nodes generation.
-    for(int i = size - natedNodes; i < size; i++) {
+    for(int i = size +1  - natedSize; i < size + 1; i++) {
+    	System.out.println("NAT: " + i);
       nated.add(i);
     }
   } 
