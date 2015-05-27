@@ -58,6 +58,7 @@ public class SwimScenario {
 
 	private static long seed;
 	private static InetAddress localHost;
+  private static NumberNodeBuilder nodeBuilder;
 
 	private static CroupierConfig croupierConfig = new CroupierConfig(10, 5,
 			2000, 1000);
@@ -118,7 +119,7 @@ public class SwimScenario {
 							localHost, 23456, nodeId));
           
           // Initialize here the dead nodes!
-					return new AggregatorComp.AggregatorInit(aggregatorAddress, new Integer[0], 0);
+					return new AggregatorComp.AggregatorInit(aggregatorAddress, nodeBuilder.getSize(), new Integer[0], 0);
 				}
 
 				public NatedAddress getAddress() {
@@ -290,7 +291,7 @@ public class SwimScenario {
 	// you can implement your own - by extending Distribution
 	public static SimulationScenario simpleBoot(final long seed) {
 		SwimScenario.seed = seed;
-		NumberNodeBuilder nodeBuilder = new NumberNodeBuilder(10, 3);
+    nodeBuilder = new NumberNodeBuilder(10, 3);
 		SimulationScenario scen = new SimulationScenario() {
 			{
 				StochasticProcess startAggregator = new StochasticProcess() {

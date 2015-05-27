@@ -62,7 +62,7 @@ public class Nodes100NoKillNoDisc {
 							localHost, 23456, nodeId));
           
           // Initialize here the dead nodes!
-					return new AggregatorComp.AggregatorInit(aggregatorAddress, new Integer[0], 0);
+					return new AggregatorComp.AggregatorInit(aggregatorAddress, 100, new Integer[0], 0);
 				}
 
 				public NatedAddress getAddress() {

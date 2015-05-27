@@ -48,7 +48,7 @@ public class AggregatorComp extends ComponentDefinition {
     private final NatedAddress selfAddress;
     
     private long start;
-    private final Integer killingTime;
+    private final Integer killingTime, size;
     private final Map<Integer, Status> snapshot;
     private final Integer[] nodeToKill;
 
@@ -56,6 +56,7 @@ public class AggregatorComp extends ComponentDefinition {
         this.selfAddress = init.selfAddress;
         this.killingTime = init.getAfter();
         this.nodeToKill = init.getKilled();
+        this.size = init.getSize();
         
         // Init the timestamp for when the nodes will be killed
         // Our assumption is that all the node will be killed at the same time
@@ -106,8 +107,14 @@ public class AggregatorComp extends ComponentDefinition {
     
     private boolean convergence() {
       for(int i = 0; i < snapshot.size(); i++) {
-        if(snapshot.get(i).getDeadNodes() < nodeToKill.length) {
-          return false;
+        if(nodeToKill.length > 0) {
+          if(snapshot.get(i).getDeadNodes() < nodeToKill.length) {
+            return false;
+          }
+        } else {
+          if(snapshot.get(i).getAliveNodes() < size) {
+            return false;
+          }
         }
       }
       
@@ -129,12 +136,13 @@ public class AggregatorComp extends ComponentDefinition {
 
     private final NatedAddress selfAddress;
     private final Integer[] killed;
-    private final Integer after;
+    private final Integer after, size;
 
-    public AggregatorInit(NatedAddress selfAddress, Integer[] killed, Integer after) {
+    public AggregatorInit(NatedAddress selfAddress, Integer size, Integer[] killed, Integer after) {
         this.selfAddress = selfAddress;
         this.killed = killed;
         this.after = after;
+        this.size = size;
     }
 
     public NatedAddress getSelfAddress() {
@@ -147,6 +155,10 @@ public class AggregatorComp extends ComponentDefinition {
 
     public Integer getAfter() {
       return after;
-    }    
+    }
+
+    public Integer getSize() {
+      return size;
+    }
   }
 }

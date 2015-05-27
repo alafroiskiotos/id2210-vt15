@@ -62,4 +62,9 @@ public abstract class AbstractNodesBuilder implements NodesBuilder{
     
     return ret;
   }
+  
+  @Override
+  public Integer getSize() {
+    return size;
+  }
 }
