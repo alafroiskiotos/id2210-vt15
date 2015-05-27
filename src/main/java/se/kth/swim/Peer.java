@@ -39,7 +39,7 @@ public class Peer {
 
 	@Override
 	public String toString() {
-		return "{" + node.getId() + "," + state + "," + incarnation + "}";
+		return "{" + node.getId() + "," + state + "," + incarnation + "parents:" + node.getParents() + "}";
 	}
 
 	@Override

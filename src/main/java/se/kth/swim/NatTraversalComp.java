@@ -19,6 +19,7 @@
 package se.kth.swim;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -52,7 +53,10 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
+import se.sics.p2ptoolbox.util.network.NatType;
 import se.sics.p2ptoolbox.util.network.NatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
+import se.sics.p2ptoolbox.util.network.impl.BasicNatedAddress;
 import se.sics.p2ptoolbox.util.network.impl.RelayHeader;
 import se.sics.p2ptoolbox.util.network.impl.SourceHeader;
 
@@ -306,21 +310,22 @@ public class NatTraversalComp extends ComponentDefinition {
   private final Handler<NatResponse> handleNatResponse = new Handler<NatResponse>() {
     @Override
     public void handle(NatResponse event) {
-      selfAddress.getParents().clear();
+      //selfAddress.getParents().clear();
       
-      event.getParents()
-        .forEach(x -> selfAddress.getParents().add(x));
-      
-      log.info("Node {} Created new SELF REFERENCE! parents are: {}", selfAddress.getId(), selfAddress.getParents());
-      
+      /*event.getParents()
+        .forEach(x -> selfAddress.getParents().add(x));*/
+    	selfAddress = new BasicNatedAddress(new BasicAddress(
+    			selfAddress.getIp(), 1234, selfAddress.getId()),
+    			NatType.NAT, new HashSet<NatedAddress>(event.getParents()));
+            
       StringBuilder sb = new StringBuilder();
       sb.append("{"); 
       event.getParents().forEach(x -> sb.append(x.getId()).append(","));
       sb.append("}");
       
-      log.info("Node {} sent new parents for {}", new Object[]{selfAddress.getId(), sb.toString()});
+      log.info("Node {} new parents are: {}", selfAddress.getId(), selfAddress.getParents());
       
-      trigger(new NatUpdate(), nat);
+      trigger(new NatUpdate(selfAddress), nat);
     }
   };
   

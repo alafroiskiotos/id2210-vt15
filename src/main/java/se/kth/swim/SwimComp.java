@@ -20,6 +20,7 @@ package se.kth.swim;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -58,7 +59,10 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
+import se.sics.p2ptoolbox.util.network.NatType;
 import se.sics.p2ptoolbox.util.network.NatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
+import se.sics.p2ptoolbox.util.network.impl.BasicNatedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -67,8 +71,8 @@ public class SwimComp extends ComponentDefinition {
 
 	private static final Logger log = LoggerFactory.getLogger(SwimComp.class);
 	// λlogn times
-	private static final Integer INFECT_FACTOR = 4;
-	private static final Integer PIGGYBACK_SIZE = 4;
+	private static final Integer INFECT_FACTOR = 10;
+	private static final Integer PIGGYBACK_SIZE = 10;
 	private static final Integer INDIRECT_PING_SIZE = 2;
 	private Integer localSequenceNumber = 0;
 
@@ -76,11 +80,12 @@ public class SwimComp extends ComponentDefinition {
 	private final Positive<Timer> timer = requires(Timer.class);
   private Positive<NatPort> nat = requires(NatPort.class);
 
-	private final NatedAddress selfAddress;
+	private NatedAddress selfAddress;
 	private final Set<NatedAddress> bootstrapNodes;
 	private final NatedAddress aggregatorAddress;
 	private List<Member> members;
-	private final Peer self;
+	private Peer self;
+	private Member selfMember;
 	private final Random rand;
   
 	private UUID pingTimeoutId;
@@ -96,9 +101,10 @@ public class SwimComp extends ComponentDefinition {
 		this.rand = new Random(init.getSeed());
 		this.members = new ArrayList<>();
 		this.self = new Peer(selfAddress, NodeState.ALIVE);
+		selfMember = new Member(self);
     
-    // We add ourself and we spread us in the beginning.
-    members.add(new Member(self));
+		// We add ourself and we spread us in the beginning.
+		members.add(selfMember);
     
 		subscribe(handleStart, control);
 		subscribe(handleStop, control);
@@ -137,7 +143,7 @@ public class SwimComp extends ComponentDefinition {
 				}
 				schedulePeriodicPing();
 			}
-			schedulePeriodicStatus();
+			//schedulePeriodicStatus();
 		}
 	};
 	private final Handler<Stop> handleStop = new Handler<Stop>() {
@@ -201,7 +207,6 @@ public class SwimComp extends ComponentDefinition {
 						localSequenceNumber), network);
 			}
 		}
-
 	};
 
 	private final Handler<NetPong> handlePong = new Handler<NetPong>() {
@@ -230,12 +235,6 @@ public class SwimComp extends ComponentDefinition {
 
 		@Override
 		public void handle(PingTimeout event) {
-			/*
-			 * for (NatedAddress partnerAddress : bootstrapNodes) {
-			 * log.info("{} sending ping to partner:{}", new Object[] {
-			 * selfAddress.getId(), partnerAddress }); trigger(new
-			 * NetPing(selfAddress, partnerAddress, "lalakoko"), network); }
-			 */
 
 			List<Peer> selectables = PeerExchangeSelection.getPingableTargets(self, members);
 
@@ -243,8 +242,6 @@ public class SwimComp extends ComponentDefinition {
 				Integer randInt = rand.nextInt(selectables.size());
 				Peer peer = selectables.get(randInt);
 				
-        
-
 				// Schedule timeout for the Failure Detector
 				UUID pingTimeoutID = schedulePingTimeout(peer);
 
@@ -258,7 +255,6 @@ public class SwimComp extends ComponentDefinition {
 
         log.info("{} sending PING to node: {}. View Sending: {}", new Object[] {
           selfAddress.getId(),peer.getNode(), piggyback });
-				
 
 				localSequenceNumber++;
 
@@ -284,7 +280,7 @@ public class SwimComp extends ComponentDefinition {
 				log.info("SUSPECTED -> " + event.getPeer().toString());
 
 				// Random peer selection for indirect ping
-				List<Peer> randomPeers = PeerExchangeSelection.getIndirectPingPeers(members, INDIRECT_PING_SIZE, rand);
+				List<Peer> randomPeers = PeerExchangeSelection.getIndirectPingPeers(members, INDIRECT_PING_SIZE, rand, self);
 
 				if (randomPeers.size() > 0) {
 					// Set a new timeout -> DEAD timeout
@@ -455,9 +451,16 @@ public class SwimComp extends ComponentDefinition {
   private final Handler<NatUpdate> handleNatUpdate = new Handler<NatUpdate>() {
     @Override
     public void handle(NatUpdate event) {
-      members.stream()
-        .filter(x -> x.getPeer().equals(self))
-        .findFirst().get().setInfectionTime(0);
+      members.remove(selfMember);
+    	
+    	selfAddress = event.getNewNatedAddress();
+    	self = new Peer(selfAddress, NodeState.ALIVE);
+    	selfMember = new Member(self);
+    	
+    	members.add(selfMember);
+    	
+    	log.info("Node {} my new parents are: {}", selfAddress.getId(), self.getNode().getParents());
+    	
     }
   };
 
@@ -489,7 +492,7 @@ public class SwimComp extends ComponentDefinition {
 	private UUID scheduleDeadTimeout(Peer destination) {
 		log.info("{} Setting DEAD timeout for node: {}", selfAddress,
 				destination);
-		ScheduleTimeout st = new ScheduleTimeout(5000);
+		ScheduleTimeout st = new ScheduleTimeout(10000);
 		DeadTimeout dt = new DeadTimeout(st, destination);
 		st.setTimeoutEvent(dt);
 		trigger(st, timer);

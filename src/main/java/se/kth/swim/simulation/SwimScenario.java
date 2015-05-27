@@ -119,7 +119,7 @@ public class SwimScenario {
 							localHost, 23456, nodeId));
           
           // Initialize here the dead nodes!
-					return new AggregatorComp.AggregatorInit(aggregatorAddress, nodeBuilder.getSize(), new Integer[0], 0);
+					return new AggregatorComp.AggregatorInit(aggregatorAddress, nodeBuilder.getSize(), new Integer[] {1}, 0);
 				}
 
 				public NatedAddress getAddress() {
@@ -291,7 +291,7 @@ public class SwimScenario {
 	// you can implement your own - by extending Distribution
 	public static SimulationScenario simpleBoot(final long seed) {
 		SwimScenario.seed = seed;
-    nodeBuilder = new NumberNodeBuilder(10, 3);
+    nodeBuilder = new NumberNodeBuilder(20, 1);
 		SimulationScenario scen = new SimulationScenario() {
 			{
 				StochasticProcess startAggregator = new StochasticProcess() {
@@ -366,12 +366,12 @@ public class SwimScenario {
 
 				startAggregator.start();
 				startPeers.startAfterTerminationOf(1000, startAggregator);
-				//killPeers.startAfterTerminationOf(5000, startPeers);
+				killPeers.startAfterTerminationOf(5000, startPeers);
 				//startNewPeer.startAfterTerminationOf(1000, killPeers);
 				//startPeerAgain.startAfterTerminationOf(7000, killPeers);
         		//deadLinks1.startAfterTerminationOf(1000,startPeers);
 				//disconnectedNodes1.startAfterTerminationOf(10000, startPeers);
-				fetchSimulationResult.startAfterTerminationOf(30 * 1000,
+				fetchSimulationResult.startAfterTerminationOf(100 * 1000,
 						startPeers);
 				terminateAfterTerminationOf(10000, fetchSimulationResult);
 

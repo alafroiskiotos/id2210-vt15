@@ -107,7 +107,7 @@ public class AggregatorComp extends ComponentDefinition {
     
     private boolean convergence() {
     	// Node ID 0 explicitly assigned to Aggregator component
-      for(int i = 1; i < snapshot.size() + 1; i++) {
+      for(int i = 1; i < snapshot.size(); i++) {
         if(nodeToKill.length > 0) {
           if(snapshot.get(i).getDeadNodes() < nodeToKill.length) {
             return false;
