@@ -116,7 +116,9 @@ public class SwimScenario {
 				public AggregatorComp.AggregatorInit getNodeComponentInit() {
 					aggregatorAddress = new BasicNatedAddress(new BasicAddress(
 							localHost, 23456, nodeId));
-					return new AggregatorComp.AggregatorInit(aggregatorAddress);
+          
+          // Initialize here the dead nodes!
+					return new AggregatorComp.AggregatorInit(aggregatorAddress, new Integer[0], 0);
 				}
 
 				public NatedAddress getAddress() {

@@ -413,8 +413,17 @@ public class SwimComp extends ComponentDefinition {
 		public void handle(StatusTimeout event) {
 			log.info("{} sending status to aggregator:{}", new Object[] {
 					selfAddress.getId(), aggregatorAddress });
+      
+      int alive = (int) members.stream()
+        .filter(x -> x.getPeer().getState().equals(NodeState.ALIVE))
+        .count();
+      
+      int dead = (int) members.stream()
+        .filter(x -> x.getPeer().getState().equals(NodeState.DEAD))
+        .count();
+      
 			trigger(new NetStatus(selfAddress, aggregatorAddress, new Status(
-					receivedPings)), network);
+					receivedPings, dead, alive)), network);
 		}
 	};
   

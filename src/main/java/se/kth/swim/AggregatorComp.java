@@ -18,8 +18,13 @@
  */
 package se.kth.swim;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.kth.swim.msg.Status;
 import se.kth.swim.msg.net.NetStatus;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
@@ -42,12 +47,23 @@ public class AggregatorComp extends ComponentDefinition {
 
     private final NatedAddress selfAddress;
     
-    private int previousDead;
-    private long start, stop;
+    private long start;
+    private final Integer killingTime;
+    private final Map<Integer, Status> snapshot;
+    private final Integer[] nodeToKill;
 
     public AggregatorComp(AggregatorInit init) {
         this.selfAddress = init.selfAddress;
+        this.killingTime = init.getAfter();
+        this.nodeToKill = init.getKilled();
+        
+        // Init the timestamp for when the nodes will be killed
+        // Our assumption is that all the node will be killed at the same time
+        this.start = System.currentTimeMillis() + killingTime;
+        
         log.info("{} initiating...", new Object[]{selfAddress.getId()});
+        
+        snapshot = new HashMap<>();
 
         subscribe(handleStart, control);
         subscribe(handleStop, control);
@@ -76,33 +92,61 @@ public class AggregatorComp extends ComponentDefinition {
         @Override
         public void handle(NetStatus status) {
             log.info("{} status from:{} pings:{}, alive:{}, dead:{}", 
-                    new Object[]{selfAddress.getId(), status.getHeader().getSource(), 
+                    new Object[]{status.getSource().getId(), status.getHeader().getSource().getId(), 
                       status.getContent().getReceivedPings(), status.getContent().getAliveNodes(),
                     status.getContent().getDeadNodes()});
             
-            if(previousDead == 0 && status.getContent().getDeadNodes() == 1) {
-              start = System.currentTimeMillis();
-            }
+            updateSnapshot(status);
             
-            if(previousDead == status.getContent().getAliveNodes() -1 &&
-              previousDead == status.getContent().getAliveNodes()) {
-              stop = System.currentTimeMillis();
+            if(convergence()) {
+              log.info("CONVERGENCE in {} ms!", System.currentTimeMillis() - start);
             }
-            
-            if(start > 0 && stop > 0) {
-              log.info("CONVERGENCE in {} ms!", stop - start);
-            }
-            
-            previousDead = status.getContent().getDeadNodes();
         }
     };
-
-    public static class AggregatorInit extends Init<AggregatorComp> {
-
-        public final NatedAddress selfAddress;
-
-        public AggregatorInit(NatedAddress selfAddress) {
-            this.selfAddress = selfAddress;
+    
+    private boolean convergence() {
+      for(int i = 0; i < snapshot.size(); i++) {
+        if(snapshot.get(i).getDeadNodes() < nodeToKill.length) {
+          return false;
         }
+      }
+      
+      return true;
     }
+    
+    private void updateSnapshot(NetStatus newState) {
+      if(snapshot.containsKey(newState.getSource().getId())) {
+        snapshot.replace(newState.getSource().getId(), newState.getContent());
+      } else {
+        // Data from the dead nodes will not be taken.
+        if(!Arrays.asList(nodeToKill).contains(newState.getSource().getId())) {
+          snapshot.put(newState.getSource().getId(), newState.getContent());
+        }
+      }
+    }
+
+  public static class AggregatorInit extends Init<AggregatorComp> {
+
+    private final NatedAddress selfAddress;
+    private final Integer[] killed;
+    private final Integer after;
+
+    public AggregatorInit(NatedAddress selfAddress, Integer[] killed, Integer after) {
+        this.selfAddress = selfAddress;
+        this.killed = killed;
+        this.after = after;
+    }
+
+    public NatedAddress getSelfAddress() {
+      return selfAddress;
+    }
+
+    public Integer[] getKilled() {
+      return killed;
+    }
+
+    public Integer getAfter() {
+      return after;
+    }    
+  }
 }

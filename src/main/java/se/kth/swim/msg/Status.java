@@ -25,8 +25,10 @@ package se.kth.swim.msg;
 public class Status {
   private int receivedPings, deadNodes, aliveNodes;
 
-  public Status(int receivedPings) {
+  public Status(int receivedPings, int deadNodes, int aliveNodes) {
       this.receivedPings = receivedPings;
+      this.deadNodes = deadNodes;
+      this.aliveNodes = aliveNodes;
   }
 
   public int getReceivedPings() {
