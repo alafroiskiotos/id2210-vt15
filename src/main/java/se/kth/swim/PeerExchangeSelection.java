@@ -54,8 +54,8 @@ public class PeerExchangeSelection {
 				Peer peer = listViewPeers.get(listViewPeers.indexOf(x));
 				Member tmpPeer;
 				if (x.getState().equals(NodeState.ALIVE)
-						&& (peer.getState().equals(NodeState.SUSPECTED) || peer
-								.getState().equals(NodeState.ALIVE))
+						/*&& (peer.getState().equals(NodeState.SUSPECTED) || peer
+								.getState().equals(NodeState.ALIVE))*/
 						&& x.getIncarnation() > peer.getIncarnation()) {
 					// ...
 					tmpPeer = new Member(x);

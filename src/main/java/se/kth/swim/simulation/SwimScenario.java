@@ -291,7 +291,7 @@ public class SwimScenario {
 	// you can implement your own - by extending Distribution
 	public static SimulationScenario simpleBoot(final long seed) {
 		SwimScenario.seed = seed;
-		nodeBuilder = new NumberNodeBuilder(4, 1);
+		nodeBuilder = new NumberNodeBuilder(10, 0);
 		NumberNodeBuilder newNodes = new NumberNodeBuilder(4, 1, 4);
 		SimulationScenario scen = new SimulationScenario() {
 			{
@@ -311,8 +311,8 @@ public class SwimScenario {
 						raise(nodeBuilder.getOpenNodes().length, startOpenNodeOp,
 								new GenIntSequentialDistribution(nodeBuilder.getOpenNodes()));
 						
-						raise(nodeBuilder.getNatedNodes().length, startNatNodeOp,
-								new GenIntSequentialDistribution(nodeBuilder.getNatedNodes()));
+						//raise(nodeBuilder.getNatedNodes().length, startNatNodeOp,
+						//		new GenIntSequentialDistribution(nodeBuilder.getNatedNodes()));
 					}
 				};
         
@@ -333,15 +333,17 @@ public class SwimScenario {
 						eventInterArrivalTime(constant(1000));
 						//raise(10, startNodeOp, new GenIntSequentialDistribution(
 						//		new Integer[] {2, 3, 4, 5, 6, 7, 8, 9, 10, 11}));
-						raise(1, startOpenNodeOp, new GenIntSequentialDistribution(new Integer[]{10}));
+						raise(1, startOpenNodeOp, new ConstantDistribution(Integer.class, 3));
 					}
 				};
         
 				StochasticProcess killPeers = new StochasticProcess() {
 					{
 						eventInterArrivalTime(constant(1000));
-						raise(1, killNodeOp, new ConstantDistribution(
-								Integer.class, 10));
+						/*raise(3, killNodeOp, new GenIntSequentialDistribution(nodeBuilder.getOpenNodes()));
+						
+						raise(15, killNodeOp, new GenIntSequentialDistribution(nodeBuilder.getNatedNodes()));*/
+						raise(1, killNodeOp, new ConstantDistribution(Integer.class, 3));
 					}
 				};
 
@@ -370,8 +372,9 @@ public class SwimScenario {
 
 				startAggregator.start();
 				startPeers.startAfterTerminationOf(1000, startAggregator);
-				//killPeers.startAfterTerminationOf(5000, startPeers);
-				startNewPeers.startAfterTerminationOf(5000, startPeers);
+				killPeers.startAfterTerminationOf(5000, startPeers);
+				startPeerAgain.startAfterTerminationOf(50000, killPeers);
+				//startNewPeers.startAfterTerminationOf(5000, startPeers);
 				//startPeerAgain.startAfterTerminationOf(7000, killPeers);
         		//deadLinks1.startAfterTerminationOf(1000,startPeers);
 				//disconnectedNodes1.startAfterTerminationOf(10000, startPeers);

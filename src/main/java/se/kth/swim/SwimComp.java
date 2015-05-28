@@ -67,8 +67,8 @@ public class SwimComp extends ComponentDefinition {
 
 	private static final Logger log = LoggerFactory.getLogger(SwimComp.class);
 	// λlogn times
-	private static final Integer INFECT_FACTOR = 10;
-	private static final Integer PIGGYBACK_SIZE = 10;
+	private static final Integer INFECT_FACTOR = 50;
+	private static final Integer PIGGYBACK_SIZE = 50;
 	private static final Integer INDIRECT_PING_SIZE = 2;
 	private Integer localSequenceNumber = 0;
 
@@ -546,7 +546,7 @@ public class SwimComp extends ComponentDefinition {
 	private UUID schedulePingTimeout(Peer destination) {
 		log.info("{} Setting PING FD timeout for node: {}", selfAddress,
 				destination);
-		ScheduleTimeout st = new ScheduleTimeout(1500);
+		ScheduleTimeout st = new ScheduleTimeout(1200);
 		PingFailureTimeout pft = new PingFailureTimeout(st, destination);
 		st.setTimeoutEvent(pft);
 		trigger(st, timer);
@@ -562,7 +562,7 @@ public class SwimComp extends ComponentDefinition {
 	private UUID scheduleDeadTimeout(Peer destination) {
 		log.info("{} Setting DEAD timeout for node: {}", selfAddress,
 				destination);
-		ScheduleTimeout st = new ScheduleTimeout(10000);
+		ScheduleTimeout st = new ScheduleTimeout(2500);
 		DeadTimeout dt = new DeadTimeout(st, destination);
 		st.setTimeoutEvent(dt);
 		trigger(st, timer);

@@ -281,6 +281,7 @@ public class NatTraversalComp extends ComponentDefinition {
 			log.info(
 					"Node {}, parent {} is DEAD!",
 					new Object[] { selfAddress.getId(), event.getPeer().getId() });
+			if (sample.size() > 1) {
 			// Only one failure is enough to choose a new set of parents. Cancel
 			// remaining.
 			sentHeartBeats.remove(event.getTimeoutId());
@@ -304,6 +305,9 @@ public class NatTraversalComp extends ComponentDefinition {
       
       //trigger(new NetNatQueryAliveRequest(selfAddress, selfAddress, newParents), network);
       trigger(new NatRequest(newParents), nat);
+			} else {
+				log.info("Node {} received empty sample from Croupier, will try later...", selfAddress.getId());
+			}
 		}
 	};
   
