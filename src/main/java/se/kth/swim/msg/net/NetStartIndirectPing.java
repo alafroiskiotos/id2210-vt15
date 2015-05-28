@@ -22,10 +22,6 @@ import se.kth.swim.msg.StartIndirectPing;
 import se.sics.kompics.network.Header;
 import se.sics.p2ptoolbox.util.network.NatedAddress;
 
-/**
- *
- * @author lorenzocorneo
- */
 public class NetStartIndirectPing extends NetMsg<StartIndirectPing> {
   
   public NetStartIndirectPing(NatedAddress source, NatedAddress destination, StartIndirectPing siping) {

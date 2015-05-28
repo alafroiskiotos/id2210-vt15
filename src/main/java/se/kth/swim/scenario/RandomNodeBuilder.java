@@ -20,10 +20,6 @@ package se.kth.swim.scenario;
 
 import java.util.Random;
 
-/**
- *
- * @author lorenzocorneo
- */
 public class RandomNodeBuilder extends AbstractNodesBuilder{
   public RandomNodeBuilder(Integer size) {
     super(size, 0, 0);

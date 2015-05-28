@@ -20,10 +20,6 @@ package se.kth.swim.nat.events;
 
 import se.sics.kompics.PortType;
 
-/**
- *
- * @author lorenzocorneo
- */
 public class NatPort extends PortType {
   {
     indication(NatRequest.class);

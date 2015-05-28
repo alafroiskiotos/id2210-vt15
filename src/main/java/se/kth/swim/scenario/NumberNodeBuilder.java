@@ -18,10 +18,6 @@
  */
 package se.kth.swim.scenario;
 
-/**
- *
- * @author lorenzocorneo
- */
 public class NumberNodeBuilder extends AbstractNodesBuilder {
   
   public NumberNodeBuilder(Integer size, Integer natedSize, Integer idOffset) {

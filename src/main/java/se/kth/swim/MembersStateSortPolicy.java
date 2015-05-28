@@ -3,11 +3,7 @@ package se.kth.swim;
 import java.util.Comparator;
 
 /**
- * 
- * @author Lorenzo Corneo and Antonios Kouzoupis
- * 
  * This class makes a MembershipList<MembershipListItem> sortable by a given NodeState
- *
  */
 public class MembersStateSortPolicy implements Comparator<Member> {
 	private final NodeState state;

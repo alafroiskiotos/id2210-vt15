@@ -18,10 +18,6 @@
  */
 package se.kth.swim.scenario;
 
-/**
- *
- * @author lorenzocorneo
- */
 public interface NodesBuilder {
   public Integer getSize();
   public Integer[] getOpenNodes();

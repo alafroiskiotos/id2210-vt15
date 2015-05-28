@@ -18,15 +18,9 @@
  */
 package se.kth.swim.nat.events;
 
-import java.util.List;
-
 import se.sics.kompics.KompicsEvent;
 import se.sics.p2ptoolbox.util.network.NatedAddress;
 
-/**
- *
- * @author lorenzocorneo
- */
 public class NatUpdate implements KompicsEvent {
   private final NatedAddress newSelfAddress;
   

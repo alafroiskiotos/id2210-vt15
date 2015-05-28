@@ -21,10 +21,6 @@ package se.kth.swim.msg;
 import java.util.UUID;
 import se.kth.swim.Peer;
 
-/**
- *
- * @author lorenzocorneo
- */
 public class StartIndirectPing extends MessageCounter {
   private final Peer suspectedPeer;
   private final Peer initiatorPeer;

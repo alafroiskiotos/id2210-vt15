@@ -21,10 +21,6 @@ package se.kth.swim.scenario;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- *
- * @author lorenzocorneo
- */
 public abstract class AbstractNodesBuilder implements NodesBuilder{
   protected Integer size, natedSize, idOffset;
   protected List<Integer> nated, open;

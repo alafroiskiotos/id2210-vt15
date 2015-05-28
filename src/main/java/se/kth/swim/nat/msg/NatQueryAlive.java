@@ -21,10 +21,6 @@ package se.kth.swim.nat.msg;
 import java.util.List;
 import se.sics.p2ptoolbox.util.network.NatedAddress;
 
-/**
- *
- * @author lorenzocorneo
- */
 public class NatQueryAlive {
   private final List<NatedAddress> parents;
   

@@ -22,10 +22,6 @@ import se.kth.swim.msg.StopIndirectPing;
 import se.sics.kompics.network.Header;
 import se.sics.p2ptoolbox.util.network.NatedAddress;
 
-/**
- *
- * @author lorenzocorneo
- */
 public class NetStopIndirectPing extends NetMsg<StopIndirectPing> {
   
   public NetStopIndirectPing(NatedAddress source, NatedAddress destination, StopIndirectPing siping) {
