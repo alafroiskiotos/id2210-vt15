@@ -41,125 +41,140 @@ import se.sics.p2ptoolbox.util.network.NatedAddress;
  */
 public class AggregatorComp extends ComponentDefinition {
 
-    private static final Logger log = LoggerFactory.getLogger(AggregatorComp.class);
-    private Positive<Network> network = requires(Network.class);
-    private Positive<Timer> timer = requires(Timer.class);
+	private static final Logger log = LoggerFactory
+			.getLogger(AggregatorComp.class);
+	private Positive<Network> network = requires(Network.class);
+	private Positive<Timer> timer = requires(Timer.class);
 
-    private final NatedAddress selfAddress;
-    
-    private long start;
-    private final Integer killingTime, size;
-    private final Map<Integer, Status> snapshot;
-    private final Integer[] nodeToKill;
+	private final NatedAddress selfAddress;
 
-    public AggregatorComp(AggregatorInit init) {
-        this.selfAddress = init.selfAddress;
-        this.killingTime = init.getAfter();
-        this.nodeToKill = init.getKilled();
-        this.size = init.getSize();
-        
-        // Init the timestamp for when the nodes will be killed
-        // Our assumption is that all the node will be killed at the same time
-        this.start = System.currentTimeMillis() + killingTime;
-        
-        log.info("{} initiating...", new Object[]{selfAddress.getId()});
-        
-        snapshot = new HashMap<>();
+	private long start, killingTime;
+	private Integer printConvergence;
+	private final Integer size;
+	private final Map<Integer, Status> snapshot;
+	private final Integer[] nodeToKill;
 
-        subscribe(handleStart, control);
-        subscribe(handleStop, control);
-        subscribe(handleStatus, network);
-    }
+	public AggregatorComp(AggregatorInit init) {
+		this.selfAddress = init.selfAddress;
+		this.killingTime = init.getKillAfter();
+		this.nodeToKill = init.getKilled();
+		this.size = init.getSize();
+		this.printConvergence = 0;
 
-    private Handler<Start> handleStart = new Handler<Start>() {
+		// Init the timestamp for when the nodes will be killed
+		// Our assumption is that all the node will be killed at the same time
+		this.start = System.currentTimeMillis() + killingTime;
 
-        @Override
-        public void handle(Start event) {
-            log.info("{} starting...", new Object[]{selfAddress});
-        }
+		log.info("{} initiating...", new Object[] { selfAddress.getId() });
 
-    };
-    private Handler<Stop> handleStop = new Handler<Stop>() {
+		snapshot = new HashMap<>();
 
-        @Override
-        public void handle(Stop event) {
-            log.info("{} stopping...", new Object[]{selfAddress});
-        }
+		subscribe(handleStart, control);
+		subscribe(handleStop, control);
+		subscribe(handleStatus, network);
+	}
 
-    };
+	private Handler<Start> handleStart = new Handler<Start>() {
 
-    private Handler<NetStatus> handleStatus = new Handler<NetStatus>() {
+		@Override
+		public void handle(Start event) {
+			log.info("{} starting...", new Object[] { selfAddress });
+		}
 
-        @Override
-        public void handle(NetStatus status) {
-            log.info("{} status from:{} pings:{}, alive:{}, dead:{}", 
-                    new Object[]{status.getSource().getId(), status.getHeader().getSource().getId(), 
-                      status.getContent().getReceivedPings(), status.getContent().getAliveNodes(),
-                    status.getContent().getDeadNodes()});
-            
-            updateSnapshot(status);
-            
-            if(convergence()) {
-              log.info("CONVERGENCE in {} ms!", System.currentTimeMillis() - start);
-            }
-        }
-    };
-    
-    private boolean convergence() {
-    	// Node ID 0 explicitly assigned to Aggregator component
-      for(int i = 0; i < snapshot.size(); i++) {
-        if(nodeToKill.length > 0) {
-          if(snapshot.get(i + 1).getDeadNodes() < nodeToKill.length) {
-            return false;
-          }
-        } else {
-          if(snapshot.get(i + 1).getAliveNodes() < size) {
-            return false;
-          }
-        }
-      }
-      
-      return true;
-    }
-    
-    private void updateSnapshot(NetStatus newState) {
-      if(snapshot.containsKey(newState.getSource().getId())) {
-        snapshot.replace(newState.getSource().getId(), newState.getContent());
-      } else {
-        // Data from the dead nodes will not be taken.
-        if(!Arrays.asList(nodeToKill).contains(newState.getSource().getId())) {
-          snapshot.put(newState.getSource().getId(), newState.getContent());
-        }
-      }
-    }
+	};
+	private Handler<Stop> handleStop = new Handler<Stop>() {
 
-  public static class AggregatorInit extends Init<AggregatorComp> {
+		@Override
+		public void handle(Stop event) {
+			log.info("{} stopping...", new Object[] { selfAddress });
+		}
 
-    private final NatedAddress selfAddress;
-    private final Integer[] killed;
-    private final Integer after, size;
+	};
 
-    public AggregatorInit(NatedAddress selfAddress, Integer size, Integer[] killed, Integer after) {
-        this.selfAddress = selfAddress;
-        this.killed = killed;
-        this.after = after;
-        this.size = size;
-    }
+	private Handler<NetStatus> handleStatus = new Handler<NetStatus>() {
 
-    public NatedAddress getSelfAddress() {
-      return selfAddress;
-    }
+		@Override
+		public void handle(NetStatus status) {
+			log.debug("{} status from:{} pings:{}, alive:{}, dead:{}",
+					new Object[] { status.getSource().getId(),
+							status.getHeader().getSource().getId(),
+							status.getContent().getReceivedPings(),
+							status.getContent().getAliveNodes(),
+							status.getContent().getDeadNodes() });
 
-    public Integer[] getKilled() {
-      return killed;
-    }
+			updateSnapshot(status);
 
-    public Integer getAfter() {
-      return after;
-    }
+			if (convergence() && printConvergence <= 1) {
+				log.info("CONVERGENCE in {} ms!", System.currentTimeMillis()
+						- start + killingTime);
+			}
+		}
+	};
 
-    public Integer getSize() {
-      return size;
-    }
-  }
+	private boolean convergence() {
+		// Node ID 0 explicitly assigned to Aggregator component
+		for (int i = 1; i < snapshot.size(); i++) {
+			if (!Arrays.asList(nodeToKill).contains(i)) {
+				if (nodeToKill.length > 0) {
+					if (snapshot.get(i).getDeadNodes() < nodeToKill.length) {
+						return false;
+					}
+				} else {
+					if (snapshot.get(i).getAliveNodes() < size) {
+						return false;
+					}
+				}
+			}
+		}
+
+		printConvergence++;
+		
+		return true;
+	}
+
+	private void updateSnapshot(NetStatus newState) {
+		if (snapshot.containsKey(newState.getSource().getId())) {
+			snapshot.replace(newState.getSource().getId(),
+					newState.getContent());
+		} else {
+			// Data from the dead nodes will not be taken.
+			if (!Arrays.asList(nodeToKill).contains(
+					newState.getSource().getId())) {
+				snapshot.put(newState.getSource().getId(),
+						newState.getContent());
+			}
+		}
+	}
+
+	public static class AggregatorInit extends Init<AggregatorComp> {
+
+		private final NatedAddress selfAddress;
+		private final Integer[] killed;
+		private final Integer size;
+		private final long killAfter;
+
+		public AggregatorInit(NatedAddress selfAddress, Integer size,
+				Integer[] killed, long killAfter) {
+			this.selfAddress = selfAddress;
+			this.killed = killed;
+			this.killAfter = killAfter;
+			this.size = size;
+		}
+
+		public NatedAddress getSelfAddress() {
+			return selfAddress;
+		}
+
+		public Integer[] getKilled() {
+			return killed;
+		}
+
+		public long getKillAfter() {
+			return killAfter;
+		}
+
+		public Integer getSize() {
+			return size;
+		}
+	}
 }

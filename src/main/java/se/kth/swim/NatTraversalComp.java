@@ -319,7 +319,7 @@ public class NatTraversalComp extends ComponentDefinition {
       /*event.getParents()
         .forEach(x -> selfAddress.getParents().add(x));*/
     	selfAddress = new BasicNatedAddress(new BasicAddress(
-    			selfAddress.getIp(), 1234, selfAddress.getId()),
+    			selfAddress.getIp(), 12345, selfAddress.getId()),
     			NatType.NAT, new HashSet<NatedAddress>(event.getParents()));
             
       StringBuilder sb = new StringBuilder();

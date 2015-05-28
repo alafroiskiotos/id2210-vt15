@@ -18,8 +18,10 @@
  */
 package se.kth.swim.scenario;
 
+import java.util.List;
+
 public interface NodesBuilder {
   public Integer getSize();
-  public Integer[] getOpenNodes();
-  public Integer[] getNatedNodes();
+  public List<Integer> getOpenNodes();
+  public List<Integer> getNatedNodes();
 }

@@ -20,8 +20,10 @@ package se.kth.swim.simulation;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -58,7 +60,13 @@ public class SwimScenario {
 
 	private static long seed;
 	private static InetAddress localHost;
-  private static NumberNodeBuilder nodeBuilder;
+	private static NumberNodeBuilder nodeBuilder;
+	private static final Integer NUMBER_OF_TOTAL_NODES = 80;
+	private static final Integer NUMBER_OF_NAT_NODES = 15;
+	private static final Integer NUMBER_OF_OPEN_KILL = 3;
+	private static final Integer NUMBER_OF_NAT_KILL = 15;
+	
+	private static Integer[] concatKillId;
 
 	private static CroupierConfig croupierConfig = new CroupierConfig(10, 5,
 			2000, 1000);
@@ -117,9 +125,11 @@ public class SwimScenario {
 				public AggregatorComp.AggregatorInit getNodeComponentInit() {
 					aggregatorAddress = new BasicNatedAddress(new BasicAddress(
 							localHost, 23456, nodeId));
-          
-          // Initialize here the dead nodes!
-					return new AggregatorComp.AggregatorInit(aggregatorAddress, nodeBuilder.getSize(), new Integer[] {1}, 0);
+
+					// Initialize here the dead nodes!
+					return new AggregatorComp.AggregatorInit(aggregatorAddress,
+							nodeBuilder.getSize(),
+							concatKillId, 5000);
 				}
 
 				public NatedAddress getAddress() {
@@ -143,10 +153,10 @@ public class SwimScenario {
 				public HostComp.HostInit getNodeComponentInit(
 						NatedAddress aggregatorServer,
 						Set<NatedAddress> bootstrapNodes) {
-					
-						// open address
-						nodeAddress = new BasicNatedAddress(new BasicAddress(
-								localHost, 12345, nodeId));
+
+					// open address
+					nodeAddress = new BasicNatedAddress(new BasicAddress(
+							localHost, 12345, nodeId));
 					/**
 					 * we don't want all nodes to start their pseudo random
 					 * generators with same seed else they might behave the same
@@ -185,12 +195,12 @@ public class SwimScenario {
 				public HostComp.HostInit getNodeComponentInit(
 						NatedAddress aggregatorServer,
 						Set<NatedAddress> bootstrapNodes) {
-					
-						// nated address
-						nodeAddress = new BasicNatedAddress(new BasicAddress(
-								localHost, 12345, nodeId), NatType.NAT,
-								bootstrapNodes);
-					
+
+					// nated address
+					nodeAddress = new BasicNatedAddress(new BasicAddress(
+							localHost, 12345, nodeId), NatType.NAT,
+							bootstrapNodes);
+
 					/**
 					 * we don't want all nodes to start their pseudo random
 					 * generators with same seed else they might behave the same
@@ -215,7 +225,7 @@ public class SwimScenario {
 			};
 		}
 	};
-	
+
 	static Operation1<KillNodeCmd, Integer> killNodeOp = new Operation1<KillNodeCmd, Integer>() {
 
 		public KillNodeCmd generate(final Integer nodeId) {
@@ -291,7 +301,7 @@ public class SwimScenario {
 	// you can implement your own - by extending Distribution
 	public static SimulationScenario simpleBoot(final long seed) {
 		SwimScenario.seed = seed;
-		nodeBuilder = new NumberNodeBuilder(10, 0);
+		nodeBuilder = new NumberNodeBuilder(NUMBER_OF_TOTAL_NODES, NUMBER_OF_NAT_NODES);
 		NumberNodeBuilder newNodes = new NumberNodeBuilder(4, 1, 4);
 		SimulationScenario scen = new SimulationScenario() {
 			{
@@ -306,44 +316,67 @@ public class SwimScenario {
 				StochasticProcess startPeers = new StochasticProcess() {
 					{
 						eventInterArrivalTime(constant(1000));
-						//raise(10, startNodeOp, new GenIntSequentialDistribution(
-						//		new Integer[] {2, 3, 4, 5, 6, 7, 8, 9, 10, 11}));
-						raise(nodeBuilder.getOpenNodes().length, startOpenNodeOp,
-								new GenIntSequentialDistribution(nodeBuilder.getOpenNodes()));
-						
-						//raise(nodeBuilder.getNatedNodes().length, startNatNodeOp,
-						//		new GenIntSequentialDistribution(nodeBuilder.getNatedNodes()));
-					}
-				};
-        
-        StochasticProcess startNewPeers = new StochasticProcess() {
-					{
-						eventInterArrivalTime(constant(1000));
-						raise(newNodes.getOpenNodes().length, startOpenNodeOp,
-								new GenIntSequentialDistribution(newNodes.getOpenNodes()));
-						
-						raise(newNodes.getNatedNodes().length, startNatNodeOp,
-								new GenIntSequentialDistribution(newNodes.getNatedNodes()));
+						// raise(10, startNodeOp, new
+						// GenIntSequentialDistribution(
+						// new Integer[] {2, 3, 4, 5, 6, 7, 8, 9, 10, 11}));
+						raise(nodeBuilder.getOpenNodes().size(),
+								startOpenNodeOp,
+								new GenIntSequentialDistribution(nodeBuilder
+										.getOpenNodes().toArray(new Integer[nodeBuilder.getOpenNodes().size()])));
+
+						raise(nodeBuilder.getNatedNodes().size(),
+								startNatNodeOp,
+								new GenIntSequentialDistribution(nodeBuilder
+										.getNatedNodes().toArray(new Integer[nodeBuilder.getNatedNodes().size()])));
 					}
 				};
 
-        // start Peer 10 again
-        StochasticProcess startPeerAgain = new StochasticProcess() {
+				StochasticProcess startNewPeers = new StochasticProcess() {
 					{
 						eventInterArrivalTime(constant(1000));
-						//raise(10, startNodeOp, new GenIntSequentialDistribution(
-						//		new Integer[] {2, 3, 4, 5, 6, 7, 8, 9, 10, 11}));
-						raise(1, startOpenNodeOp, new ConstantDistribution(Integer.class, 3));
+						raise(newNodes.getOpenNodes().size(),
+								startOpenNodeOp,
+								new GenIntSequentialDistribution(newNodes
+										.getOpenNodes().toArray(new Integer[newNodes.getOpenNodes().size()])));
+
+						raise(newNodes.getNatedNodes().size(),
+								startNatNodeOp,
+								new GenIntSequentialDistribution(newNodes
+										.getNatedNodes().toArray(new Integer[newNodes.getNatedNodes().size()])));
 					}
 				};
-        
-				StochasticProcess killPeers = new StochasticProcess() {
+
+				// start Peer 10 again
+				StochasticProcess startPeerAgain = new StochasticProcess() {
 					{
 						eventInterArrivalTime(constant(1000));
-						/*raise(3, killNodeOp, new GenIntSequentialDistribution(nodeBuilder.getOpenNodes()));
+						// raise(10, startNodeOp, new
+						// GenIntSequentialDistribution(
+						// new Integer[] {2, 3, 4, 5, 6, 7, 8, 9, 10, 11}));
+						raise(1, startOpenNodeOp, new ConstantDistribution(
+								Integer.class, 3));
+					}
+				};
+
+				StochasticProcess killPeers = new StochasticProcess() {
+					{
 						
-						raise(15, killNodeOp, new GenIntSequentialDistribution(nodeBuilder.getNatedNodes()));*/
-						raise(1, killNodeOp, new ConstantDistribution(Integer.class, 3));
+
+						eventInterArrivalTime(constant(1000));
+						Integer[] openIdToKill = nodeBuilder.getOpenNodes().subList(0, NUMBER_OF_OPEN_KILL + 1).toArray(new Integer[NUMBER_OF_OPEN_KILL]);
+						Integer[] natIdToKill = nodeBuilder.getNatedNodes().subList(0, NUMBER_OF_NAT_KILL + 1).toArray(new Integer[NUMBER_OF_NAT_KILL]);
+
+						raise(NUMBER_OF_OPEN_KILL, killNodeOp, new GenIntSequentialDistribution(openIdToKill));
+						raise(NUMBER_OF_NAT_KILL, killNodeOp, new GenIntSequentialDistribution(natIdToKill));
+						
+						concatKillId = new Integer[NUMBER_OF_OPEN_KILL + NUMBER_OF_NAT_KILL];
+						
+						System.arraycopy(openIdToKill, 0, concatKillId, 0, NUMBER_OF_OPEN_KILL);
+						System.arraycopy(natIdToKill, 0, concatKillId, NUMBER_OF_OPEN_KILL, NUMBER_OF_NAT_KILL);
+
+						
+						// raise(1, killNodeOp, new
+						// ConstantDistribution(Integer.class, 3));
 					}
 				};
 
@@ -372,13 +405,14 @@ public class SwimScenario {
 
 				startAggregator.start();
 				startPeers.startAfterTerminationOf(1000, startAggregator);
-				killPeers.startAfterTerminationOf(5000, startPeers);
-				startPeerAgain.startAfterTerminationOf(50000, killPeers);
-				//startNewPeers.startAfterTerminationOf(5000, startPeers);
-				//startPeerAgain.startAfterTerminationOf(7000, killPeers);
-        		//deadLinks1.startAfterTerminationOf(1000,startPeers);
-				//disconnectedNodes1.startAfterTerminationOf(10000, startPeers);
-				fetchSimulationResult.startAfterTerminationOf(100 * 1000,
+				killPeers.startAfterTerminationOf(7000, startPeers);
+				// startPeerAgain.startAfterTerminationOf(50000, killPeers);
+				// startNewPeers.startAfterTerminationOf(5000, startPeers);
+				// startPeerAgain.startAfterTerminationOf(7000, killPeers);
+				// deadLinks1.startAfterTerminationOf(1000,startPeers);
+				// disconnectedNodes1.startAfterTerminationOf(10000,
+				// startPeers);
+				fetchSimulationResult.startAfterTerminationOf(300 * 1000,
 						startPeers);
 				terminateAfterTerminationOf(10000, fetchSimulationResult);
 

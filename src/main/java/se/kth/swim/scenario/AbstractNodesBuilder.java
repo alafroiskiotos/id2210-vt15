@@ -42,13 +42,13 @@ public abstract class AbstractNodesBuilder implements NodesBuilder{
   protected abstract void generate();
   
   @Override
-  public Integer[] getOpenNodes() {
-    return arrayListToArray(open);
+  public List<Integer> getOpenNodes() {
+    return open;
   }
 
   @Override
-  public Integer[] getNatedNodes() {
-    return arrayListToArray(nated);
+  public List<Integer> getNatedNodes() {
+    return nated;
   }
   
   private Integer[] arrayListToArray(List<Integer> list) {
