@@ -102,6 +102,7 @@ public class SwimComp extends ComponentDefinition {
 		this.members = new ArrayList<>();
 		this.self = new Peer(selfAddress, NodeState.ALIVE);
 		selfMember = new Member(self);
+		selfMember.setPingedTimes(Integer.MAX_VALUE);
     
 		// We add ourself and we spread us in the beginning.
 		members.add(selfMember);
@@ -143,7 +144,7 @@ public class SwimComp extends ComponentDefinition {
 				}
 				schedulePeriodicPing();
 			}
-			//schedulePeriodicStatus();
+			schedulePeriodicStatus();
 		}
 	};
 	private final Handler<Stop> handleStop = new Handler<Stop>() {
@@ -236,14 +237,17 @@ public class SwimComp extends ComponentDefinition {
 		@Override
 		public void handle(PingTimeout event) {
 
-			List<Peer> selectables = PeerExchangeSelection.getPingableTargets(self, members);
+			List<Member> selectables = PeerExchangeSelection.getPingableTargets(self, members);
 
 			if (!selectables.isEmpty()) {
-				Integer randInt = rand.nextInt(selectables.size());
-				Peer peer = selectables.get(randInt);
+				//Integer randInt = rand.nextInt(selectables.size());
+				Member pingPeer = selectables.get(0);
 				
 				// Schedule timeout for the Failure Detector
-				UUID pingTimeoutID = schedulePingTimeout(peer);
+				UUID pingTimeoutID = schedulePingTimeout(pingPeer.getPeer());
+				
+				//Increment ping time
+				pingPeer.incrementPingedTimes();
 
 				// Sort my partial view
 				Collections.sort(members, new MembersInfectionSortPolicy());
@@ -254,12 +258,12 @@ public class SwimComp extends ComponentDefinition {
 				PeerExchangeSelection.updateInfectionTime(members, piggyback);
 
         log.info("{} sending PING to node: {}. View Sending: {}", new Object[] {
-          selfAddress.getId(),peer.getNode(), piggyback });
+          selfAddress.getId(),pingPeer.getPeer().getNode(), piggyback });
 
 				localSequenceNumber++;
 
 				// Piggyback partial view of my membership list
-				trigger(new NetPing(selfAddress, peer.getNode(), piggyback,
+				trigger(new NetPing(selfAddress, pingPeer.getPeer().getNode(), piggyback,
 						pingTimeoutID, localSequenceNumber), network);
 			}
 		}
@@ -458,12 +462,9 @@ public class SwimComp extends ComponentDefinition {
     	self = new Peer(selfAddress, NodeState.ALIVE);
     	selfMember = new Member(self);
     	selfMember.getPeer().setIncarnation(oldIncarnation + 1);
+    	selfMember.setPingedTimes(Integer.MAX_VALUE);
     	
-    	members.add(selfMember);
-    	
-    	
-    	log.info("Node {} my new parents are: {}", selfAddress.getId(), self.getNode().getParents());
-    	
+    	members.add(selfMember);    	
     }
   };
 

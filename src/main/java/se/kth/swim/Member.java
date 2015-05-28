@@ -4,13 +4,27 @@ public class Member {
 	private final Peer peer;
 	private Integer infectionTime;
 	private Integer sequenceNumber;
+	private Integer pingedTimes;
 	
 	public Member(Peer peer) {
 		this.peer = peer;
 		this.infectionTime = 0;
 		this.sequenceNumber = 0;
+		this.pingedTimes = 0;
 	}
 
+	public Integer getPingedTimes() {
+		return pingedTimes;
+	}
+	
+	public void setPingedTimes(Integer pingedTimes) {
+		this.pingedTimes = pingedTimes;
+	}
+	
+	public void incrementPingedTimes() {
+		pingedTimes++;
+	}
+	
 	public Integer getInfectionTime() {
 		return infectionTime;
 	}
