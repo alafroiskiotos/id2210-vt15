@@ -451,13 +451,16 @@ public class SwimComp extends ComponentDefinition {
   private final Handler<NatUpdate> handleNatUpdate = new Handler<NatUpdate>() {
     @Override
     public void handle(NatUpdate event) {
+    	Integer oldIncarnation = selfMember.getPeer().getIncarnation();
       members.remove(selfMember);
     	
     	selfAddress = event.getNewNatedAddress();
     	self = new Peer(selfAddress, NodeState.ALIVE);
     	selfMember = new Member(self);
+    	selfMember.getPeer().setIncarnation(oldIncarnation + 1);
     	
     	members.add(selfMember);
+    	
     	
     	log.info("Node {} my new parents are: {}", selfAddress.getId(), self.getNode().getParents());
     	

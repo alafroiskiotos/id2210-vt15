@@ -42,21 +42,21 @@ public class PeerExchangeSelection {
             peer.getState().equals(NodeState.ALIVE)) &&
             x.getIncarnation() > peer.getIncarnation()) {
           // ...
-          ret.add(new Member(peer));
+          ret.add(new Member(x));
         } else if(x.getState().equals(NodeState.SUSPECTED) && 
           peer.getState().equals(NodeState.SUSPECTED) &&
           x.getIncarnation() > peer.getIncarnation()) {
           // ...
-          ret.add(new Member(peer));
+          ret.add(new Member(x));
         } else if(x.getState().equals(NodeState.SUSPECTED) && 
           peer.getState().equals(NodeState.ALIVE) &&
           x.getIncarnation() >= peer.getIncarnation()) {
           // ...
-          ret.add(new Member(peer));
+          ret.add(new Member(x));
         } else if(x.getState().equals(NodeState.DEAD) && 
           (peer.getState().equals(NodeState.ALIVE) || peer.getState().equals(NodeState.SUSPECTED))) {
           // ...
-          ret.add(new Member(peer));
+          ret.add(new Member(x));
         }
       } else {
         // If we don't have it in our members list we just add it.
