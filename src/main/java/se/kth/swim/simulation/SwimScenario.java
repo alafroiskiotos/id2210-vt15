@@ -61,10 +61,10 @@ public class SwimScenario {
 	private static long seed;
 	private static InetAddress localHost;
 	private static NumberNodeBuilder nodeBuilder;
-	private static final Integer NUMBER_OF_TOTAL_NODES = 80;
-	private static final Integer NUMBER_OF_NAT_NODES = 15;
+	private static final Integer NUMBER_OF_TOTAL_NODES = 10;
+	private static final Integer NUMBER_OF_NAT_NODES = 3;
 	private static final Integer NUMBER_OF_OPEN_KILL = 3;
-	private static final Integer NUMBER_OF_NAT_KILL = 15;
+	private static final Integer NUMBER_OF_NAT_KILL = 1;
 	
 	private static Integer[] concatKillId;
 
@@ -366,14 +366,14 @@ public class SwimScenario {
 						Integer[] openIdToKill = nodeBuilder.getOpenNodes().subList(0, NUMBER_OF_OPEN_KILL + 1).toArray(new Integer[NUMBER_OF_OPEN_KILL]);
 						Integer[] natIdToKill = nodeBuilder.getNatedNodes().subList(0, NUMBER_OF_NAT_KILL + 1).toArray(new Integer[NUMBER_OF_NAT_KILL]);
 
-						raise(NUMBER_OF_OPEN_KILL, killNodeOp, new GenIntSequentialDistribution(openIdToKill));
-						raise(NUMBER_OF_NAT_KILL, killNodeOp, new GenIntSequentialDistribution(natIdToKill));
+						//raise(NUMBER_OF_OPEN_KILL, killNodeOp, new GenIntSequentialDistribution(openIdToKill));
+						//raise(NUMBER_OF_NAT_KILL, killNodeOp, new GenIntSequentialDistribution(natIdToKill));
 						
 						concatKillId = new Integer[NUMBER_OF_OPEN_KILL + NUMBER_OF_NAT_KILL];
 						
 						System.arraycopy(openIdToKill, 0, concatKillId, 0, NUMBER_OF_OPEN_KILL);
 						System.arraycopy(natIdToKill, 0, concatKillId, NUMBER_OF_OPEN_KILL, NUMBER_OF_NAT_KILL);
-
+						raise(2, killNodeOp, new GenIntSequentialDistribution(new Integer[]{4, 5}));
 						
 						// raise(1, killNodeOp, new
 						// ConstantDistribution(Integer.class, 3));
@@ -405,7 +405,7 @@ public class SwimScenario {
 
 				startAggregator.start();
 				startPeers.startAfterTerminationOf(1000, startAggregator);
-				killPeers.startAfterTerminationOf(7000, startPeers);
+				killPeers.startAfterTerminationOf(5000, startPeers);
 				// startPeerAgain.startAfterTerminationOf(50000, killPeers);
 				// startNewPeers.startAfterTerminationOf(5000, startPeers);
 				// startPeerAgain.startAfterTerminationOf(7000, killPeers);

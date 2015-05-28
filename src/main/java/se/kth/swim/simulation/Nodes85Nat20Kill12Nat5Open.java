@@ -24,14 +24,14 @@ import se.sics.p2ptoolbox.util.network.NatedAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicNatedAddress;
 
-public class Nodes80Nat15Kill10Nat10Open {
+public class Nodes85Nat20Kill12Nat5Open {
 	private static long seed;
 	private static InetAddress localHost;
 	private static NumberNodeBuilder nodeBuilder;
-	private static final Integer NUMBER_OF_TOTAL_NODES = 80;
-	private static final Integer NUMBER_OF_NAT_NODES = 15;
-	private static final Integer NUMBER_OF_OPEN_KILL = 10;
-	private static final Integer NUMBER_OF_NAT_KILL = 10;
+	private static final Integer NUMBER_OF_TOTAL_NODES = 85;
+	private static final Integer NUMBER_OF_NAT_NODES = 20;
+	private static final Integer NUMBER_OF_NAT_KILL = 12;
+	private static final Integer NUMBER_OF_OPEN_KILL = 5;
 	
 	private static Integer[] concatKillId;
 
@@ -184,7 +184,7 @@ public class Nodes80Nat15Kill10Nat10Open {
 	};
 	
 	public static SimulationScenario simpleBoot(final long seed) {
-		Nodes80Nat15Kill10Nat10Open.seed = seed;
+		Nodes85Nat20Kill12Nat5Open.seed = seed;
 		nodeBuilder = new NumberNodeBuilder(NUMBER_OF_TOTAL_NODES,
 				NUMBER_OF_NAT_NODES);
 		SimulationScenario scen = new SimulationScenario() {
@@ -210,6 +210,7 @@ public class Nodes80Nat15Kill10Nat10Open {
 																.getOpenNodes()
 																.size()])));
 
+						
 						if (nodeBuilder.getNatedNodes().size() > 0) {
 							raise(nodeBuilder.getNatedNodes().size(),startNatNodeOp,
 									new GenIntSequentialDistribution(nodeBuilder.getNatedNodes()
@@ -224,7 +225,7 @@ public class Nodes80Nat15Kill10Nat10Open {
 						
 
 						eventInterArrivalTime(constant(1000));
-						Integer[] openIdToKill = nodeBuilder.getOpenNodes().subList(0, NUMBER_OF_OPEN_KILL + 1).toArray(new Integer[NUMBER_OF_OPEN_KILL]);
+						Integer[] openIdToKill = nodeBuilder.getOpenNodes().subList(20, 20 + NUMBER_OF_OPEN_KILL + 1).toArray(new Integer[NUMBER_OF_OPEN_KILL]);
 						Integer[] natIdToKill = nodeBuilder.getNatedNodes().subList(0, NUMBER_OF_NAT_KILL + 1).toArray(new Integer[NUMBER_OF_NAT_KILL]);
 
 						raise(NUMBER_OF_OPEN_KILL, killNodeOp, new GenIntSequentialDistribution(openIdToKill));
@@ -246,10 +247,10 @@ public class Nodes80Nat15Kill10Nat10Open {
 
 				startAggregator.start();
 				startPeers.startAfterTerminationOf(1000, startAggregator);
-				killPeers.startAfterTerminationOf(5000, startPeers);
-				fetchSimulationResult.startAfterTerminationOf(30 * 1000,
+				killPeers.startAfterTerminationOf(3000, startPeers);
+				fetchSimulationResult.startAfterTerminationOf(300 * 1000,
 						startPeers);
-				terminateAfterTerminationOf(10000, fetchSimulationResult);
+				terminateAfterTerminationOf(80000, fetchSimulationResult);
 
 			}
 		};

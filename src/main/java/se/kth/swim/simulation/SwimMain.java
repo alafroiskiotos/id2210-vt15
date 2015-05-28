@@ -44,7 +44,7 @@ public class SwimMain {
          */
         //LauncherComp.scenario = SwimScenario.simpleBoot(1234L);
         //LauncherComp.scenario = Nodes100NoKillNoDisc.simpleBoot(1234L);
-        LauncherComp.scenario = Nodes80Nat15Kill10Nat10Open.simpleBoot(1234L);
+        LauncherComp.scenario = Nodes85Nat20Kill12Nat5Open.simpleBoot(1234L);
         
         try {
             LauncherComp.simulatorClientAddress = new BasicNatedAddress(new BasicAddress(InetAddress.getByName("127.0.0.1"), 30000, -1));

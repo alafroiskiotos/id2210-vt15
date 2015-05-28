@@ -19,11 +19,16 @@
 package se.kth.swim;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import se.kth.swim.msg.Status;
 import se.kth.swim.msg.net.NetStatus;
 import se.sics.kompics.ComponentDefinition;
@@ -49,21 +54,26 @@ public class AggregatorComp extends ComponentDefinition {
 	private final NatedAddress selfAddress;
 
 	private long start, killingTime;
-	private Integer printConvergence;
+	private boolean printConvergence;
 	private final Integer size;
 	private final Map<Integer, Status> snapshot;
 	private final Integer[] nodeToKill;
+	private Date now;
 
 	public AggregatorComp(AggregatorInit init) {
 		this.selfAddress = init.selfAddress;
 		this.killingTime = init.getKillAfter();
 		this.nodeToKill = init.getKilled();
 		this.size = init.getSize();
-		this.printConvergence = 0;
+		this.printConvergence = true;
+		
+		System.out.println("Total size: " + size);
+		System.out.println("nodetokill: " + nodeToKill.length);
 
 		// Init the timestamp for when the nodes will be killed
 		// Our assumption is that all the node will be killed at the same time
-		this.start = System.currentTimeMillis() + killingTime;
+		now = new Date();
+		this.start = now.getTime();
 
 		log.info("{} initiating...", new Object[] { selfAddress.getId() });
 
@@ -95,41 +105,77 @@ public class AggregatorComp extends ComponentDefinition {
 
 		@Override
 		public void handle(NetStatus status) {
-			log.debug("{} status from:{} pings:{}, alive:{}, dead:{}",
+			log.debug("{} status from:{} pings:{}, alive:{}, dead:{}, suspected:{}",
 					new Object[] { status.getSource().getId(),
 							status.getHeader().getSource().getId(),
 							status.getContent().getReceivedPings(),
 							status.getContent().getAliveNodes(),
-							status.getContent().getDeadNodes() });
+							status.getContent().getDeadNodes(),
+							status.getContent().getSuspectedNodes()});
 
-			updateSnapshot(status);
+			/*updateSnapshot(status);
 
-			if (convergence() && printConvergence <= 1) {
-				log.info("CONVERGENCE in {} ms!", System.currentTimeMillis()
-						- start + killingTime);
+			if (convergence()) {
+				now = new Date();
+				log.info("CONVERGENCE in {} ms!", now.getTime() - start);
+			}*/
+			
+			if (snapshot.containsKey(status.getSource().getId()) && !status.getSource().getId().equals(1)) {
+				if (checkCorrectness(status.getContent())) {
+					snapshot.replace(status.getSource().getId(), status.getContent());
+				} else {
+					snapshot.remove(status.getSource().getId());
+				}
+			} else {
+				if (checkCorrectness(status.getContent())) {
+					snapshot.put(status.getSource().getId(), status.getContent());
+				}
+			}
+			
+			if (snapshot.size() == (size - nodeToKill.length) && printConvergence) {
+				// Print only once
+				printConvergence = false;
+				now  = new Date();
+				log.info("CONVERGENCE in {} ms for {} nodes", now.getTime() - start, snapshot.size());
 			}
 		}
 	};
+	
+	private boolean checkCorrectness(Status status) {
+		if (status.getAliveNodes().equals(size - nodeToKill.length)
+				&& status.getDeadNodes().equals(nodeToKill.length)) {
+			return true;
+		}
+		
+		return false;
+	}
 
-	private boolean convergence() {
+	/*private boolean convergence() {
 		// Node ID 0 explicitly assigned to Aggregator component
 		for (int i = 1; i < snapshot.size(); i++) {
 			if (!Arrays.asList(nodeToKill).contains(i)) {
 				if (nodeToKill.length > 0) {
 					if (snapshot.get(i).getDeadNodes() < nodeToKill.length) {
 						return false;
+					} else {
+						convergedNodes.add(i);
 					}
 				} else {
 					if (snapshot.get(i).getAliveNodes() < size) {
 						return false;
+					} else {
+						convergedNodes.add(i);
 					}
 				}
 			}
 		}
 
-		printConvergence++;
+		if (convergedNodes.size() == (size - nodeToKill.length)) {
+			printConvergence++;
+			return true;
+		}
 		
-		return true;
+		return false;
 	}
 
 	private void updateSnapshot(NetStatus newState) {
@@ -144,7 +190,7 @@ public class AggregatorComp extends ComponentDefinition {
 						newState.getContent());
 			}
 		}
-	}
+	}*/
 
 	public static class AggregatorInit extends Init<AggregatorComp> {
 

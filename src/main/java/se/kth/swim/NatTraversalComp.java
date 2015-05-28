@@ -48,6 +48,7 @@ import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
 import se.sics.kompics.network.Header;
 import se.sics.kompics.network.Network;
+import se.sics.kompics.timer.CancelPeriodicTimeout;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
@@ -285,25 +286,17 @@ public class NatTraversalComp extends ComponentDefinition {
 			// Only one failure is enough to choose a new set of parents. Cancel
 			// remaining.
 			sentHeartBeats.remove(event.getTimeoutId());
-			sentHeartBeats.forEach(x -> cancelParentFailureTimeout(x));
-			sentHeartBeats.clear();
+			List<UUID> tmpUUIDList = new ArrayList<UUID>(sentHeartBeats);
+			tmpUUIDList.forEach(x -> { cancelParentFailureTimeout(x);
+				sentHeartBeats.remove(x);
+				});
 
+			tmpUUIDList.clear();
+			
 			// Set new parents
 			List<NatedAddress> newParents = new ArrayList<>(
 					sample.subList(0, Math.min(sample.size(), PARENTS_SIZE + 1)));
 			
-      // For newParents, query Swim for alive nodes
-      // return alive subset
-			for (NatedAddress natedAddress : newParents) {
-				System.out.println("New parents: " + natedAddress);
-			}
-			
-			// Build new self address
-			//selfAddress = new BasicNatedAddress(new BasicAddress(
-			//		selfAddress.getIp(), 1234, selfAddress.getId()),
-			//		NatType.NAT, newParents);
-      
-      //trigger(new NetNatQueryAliveRequest(selfAddress, selfAddress, newParents), network);
       trigger(new NatRequest(newParents), nat);
 			} else {
 				log.info("Node {} received empty sample from Croupier, will try later...", selfAddress.getId());
@@ -372,7 +365,7 @@ public class NatTraversalComp extends ComponentDefinition {
 	}
 
 	private UUID schedulePeriodicHB() {
-		SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(1000, 2500);
+		SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(1000, 1000);
 		HeartBeatTimeout hbtime = new HeartBeatTimeout(spt);
 		spt.setTimeoutEvent(hbtime);
 		UUID pingTimeoutId = hbtime.getTimeoutId();
@@ -382,7 +375,7 @@ public class NatTraversalComp extends ComponentDefinition {
 	}
 
 	private void cancelPeriodicHB(UUID timeoutId) {
-		CancelTimeout ct = new CancelTimeout(timeoutId);
+		CancelPeriodicTimeout ct = new CancelPeriodicTimeout(timeoutId);
 		trigger(ct, timer);
 	}
 
@@ -394,7 +387,7 @@ public class NatTraversalComp extends ComponentDefinition {
 	}
 
 	private UUID scheduleParentFailureTimeout(NatedAddress peer) {
-		ScheduleTimeout st = new ScheduleTimeout(2000);
+		ScheduleTimeout st = new ScheduleTimeout(1300);
 		ParentFailureTimeout pft = new ParentFailureTimeout(st, peer);
 		st.setTimeoutEvent(pft);
 		UUID failureTimeout = pft.getTimeoutId();

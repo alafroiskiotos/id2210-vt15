@@ -53,6 +53,7 @@ import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
 import se.sics.kompics.network.Network;
+import se.sics.kompics.timer.CancelPeriodicTimeout;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
@@ -68,7 +69,7 @@ public class SwimComp extends ComponentDefinition {
 	private static final Logger log = LoggerFactory.getLogger(SwimComp.class);
 	// λlogn times
 	private static final Integer INFECT_FACTOR = 50;
-	private static final Integer PIGGYBACK_SIZE = 50;
+	private static final Integer PIGGYBACK_SIZE = 60;
 	private static final Integer INDIRECT_PING_SIZE = 2;
 	private Integer localSequenceNumber = 0;
 
@@ -464,9 +465,13 @@ public class SwimComp extends ComponentDefinition {
 			int dead = (int) members.stream()
 					.filter(x -> x.getPeer().getState().equals(NodeState.DEAD))
 					.count();
+			
+			int suspected = (int) members.stream()
+					.filter(x -> x.getPeer().getState().equals(NodeState.SUSPECTED))
+					.count();
 
 			trigger(new NetStatus(selfAddress, aggregatorAddress, new Status(
-					receivedPings, dead, alive)), network);
+					receivedPings, dead, alive, suspected)), network);
 		}
 	};
 
@@ -609,7 +614,7 @@ public class SwimComp extends ComponentDefinition {
 	 * Cancel period ping timeout when the component terminates
 	 */
 	private void cancelPeriodicPing() {
-		CancelTimeout cpt = new CancelTimeout(pingTimeoutId);
+		CancelPeriodicTimeout cpt = new CancelPeriodicTimeout(pingTimeoutId);
 		trigger(cpt, timer);
 		pingTimeoutId = null;
 	}
@@ -618,7 +623,7 @@ public class SwimComp extends ComponentDefinition {
 	 * Schedule timeout to send statistics to Aggregator component
 	 */
 	private void schedulePeriodicStatus() {
-		SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(10000, 10000);
+		SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(1000, 1000);
 		StatusTimeout sc = new StatusTimeout(spt);
 		spt.setTimeoutEvent(sc);
 		statusTimeoutId = sc.getTimeoutId();
@@ -629,7 +634,7 @@ public class SwimComp extends ComponentDefinition {
 	 * Cancel timout for Aggregator when the component terminates
 	 */
 	private void cancelPeriodicStatus() {
-		CancelTimeout cpt = new CancelTimeout(statusTimeoutId);
+		CancelPeriodicTimeout cpt = new CancelPeriodicTimeout(statusTimeoutId);
 		trigger(cpt, timer);
 		statusTimeoutId = null;
 	}

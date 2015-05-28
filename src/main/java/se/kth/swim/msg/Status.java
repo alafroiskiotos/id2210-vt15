@@ -23,23 +23,28 @@ package se.kth.swim.msg;
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class Status {
-  private int receivedPings, deadNodes, aliveNodes;
+  private Integer receivedPings, deadNodes, aliveNodes, suspectedNodes;
 
-  public Status(int receivedPings, int deadNodes, int aliveNodes) {
+  public Status(Integer receivedPings, Integer deadNodes, Integer aliveNodes, Integer suspectedNodes) {
       this.receivedPings = receivedPings;
       this.deadNodes = deadNodes;
       this.aliveNodes = aliveNodes;
+      this.suspectedNodes = suspectedNodes;
   }
 
-  public int getReceivedPings() {
+  public Integer getReceivedPings() {
     return receivedPings;
   }
 
-  public int getDeadNodes() {
+  public Integer getDeadNodes() {
     return deadNodes;
   }
 
-  public int getAliveNodes() {
+  public Integer getAliveNodes() {
     return aliveNodes;
+  }
+  
+  public Integer getSuspectedNodes() {
+	  return suspectedNodes;
   }
 }
