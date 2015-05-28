@@ -291,7 +291,8 @@ public class SwimScenario {
 	// you can implement your own - by extending Distribution
 	public static SimulationScenario simpleBoot(final long seed) {
 		SwimScenario.seed = seed;
-    nodeBuilder = new NumberNodeBuilder(20, 1);
+		nodeBuilder = new NumberNodeBuilder(4, 1);
+		NumberNodeBuilder newNodes = new NumberNodeBuilder(4, 1, 4);
 		SimulationScenario scen = new SimulationScenario() {
 			{
 				StochasticProcess startAggregator = new StochasticProcess() {
@@ -315,11 +316,14 @@ public class SwimScenario {
 					}
 				};
         
-        StochasticProcess startNewPeer = new StochasticProcess() {
+        StochasticProcess startNewPeers = new StochasticProcess() {
 					{
 						eventInterArrivalTime(constant(1000));
-						/*raise(1, startNodeOp, new GenIntSequentialDistribution(
-								new Integer[] {4}));*/
+						raise(newNodes.getOpenNodes().length, startOpenNodeOp,
+								new GenIntSequentialDistribution(newNodes.getOpenNodes()));
+						
+						raise(newNodes.getNatedNodes().length, startNatNodeOp,
+								new GenIntSequentialDistribution(newNodes.getNatedNodes()));
 					}
 				};
 
@@ -366,8 +370,8 @@ public class SwimScenario {
 
 				startAggregator.start();
 				startPeers.startAfterTerminationOf(1000, startAggregator);
-				killPeers.startAfterTerminationOf(5000, startPeers);
-				//startNewPeer.startAfterTerminationOf(1000, killPeers);
+				//killPeers.startAfterTerminationOf(5000, startPeers);
+				startNewPeers.startAfterTerminationOf(5000, startPeers);
 				//startPeerAgain.startAfterTerminationOf(7000, killPeers);
         		//deadLinks1.startAfterTerminationOf(1000,startPeers);
 				//disconnectedNodes1.startAfterTerminationOf(10000, startPeers);

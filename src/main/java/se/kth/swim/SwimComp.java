@@ -140,7 +140,7 @@ public class SwimComp extends ComponentDefinition {
 				}
 				schedulePeriodicPing();
 			}
-			schedulePeriodicStatus();
+			//schedulePeriodicStatus();
 		}
 	};
 	private final Handler<Stop> handleStop = new Handler<Stop>() {

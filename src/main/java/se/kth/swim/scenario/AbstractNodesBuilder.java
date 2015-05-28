@@ -26,12 +26,13 @@ import java.util.List;
  * @author lorenzocorneo
  */
 public abstract class AbstractNodesBuilder implements NodesBuilder{
-  protected Integer size, natedSize;
+  protected Integer size, natedSize, idOffset;
   protected List<Integer> nated, open;
   
-  public AbstractNodesBuilder(Integer size, Integer natedSize) {
+  public AbstractNodesBuilder(Integer size, Integer natedSize, Integer idOffset) {
     this.size = size;
     this.natedSize = natedSize;
+    this.idOffset = idOffset;
     this.open = new ArrayList<>();
     this.nated = new ArrayList<>();
     

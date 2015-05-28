@@ -26,7 +26,7 @@ import java.util.Random;
  */
 public class RandomNodeBuilder extends AbstractNodesBuilder{
   public RandomNodeBuilder(Integer size) {
-    super(size, 0);
+    super(size, 0, 0);
   }
 
   @Override
