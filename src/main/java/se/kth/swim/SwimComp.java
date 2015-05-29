@@ -183,7 +183,7 @@ public class SwimComp extends ComponentDefinition {
 						event.getContent().getPiggyback());
 
 				// Create piggyback view. Sort local view with infection
-				// time and node status - DEAD status first
+				// time - less infected first
 				Collections.sort(members, new MembersInfectionSortPolicy());
 				List<Peer> piggyback = PeerExchangeSelection.getPeers(members,
 						PIGGYBACK_SIZE, INFECT_FACTOR);
@@ -263,7 +263,7 @@ public class SwimComp extends ComponentDefinition {
 				// Increment ping time
 				pingPeer.incrementPingedTimes();
 
-				// Sort local view with infection time and node status - DEAD first
+				// Sort local view with infection time - less infected first
 				Collections.sort(members, new MembersInfectionSortPolicy());
 				// Get piggyback
 				List<Peer> piggyback = PeerExchangeSelection.getPeers(members,
