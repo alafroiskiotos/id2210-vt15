@@ -1,4 +1,6 @@
-\documentclass[10pt,a4paper]{article}
+\documentclass[10pt,a4paper]{proc}
+
+\usepackage{graphicx}
 
 \begin{document}
 \title{Home Assignement}
@@ -37,15 +39,71 @@ The SWIM protocol is highly configurable and, in particular, the most important 
 
 This is not all, to guarantee the convergence in our experimentation we also varied the number of peers behind the NAT. For instance, if the number of those peers is too high the overlay will not converge.
 
-\subsection{Experimentation results}
-
-\subsection{Consideration}
+\subsection{Considerations}
 
 We were not completely sure about the validity of those results because when we ran again the experimentations we got different results. Nonetheless, the theoretical studies done on SWIM made us able to know about the existence of an optimal configuration of the parameters. 
 
 After a deep analysis, we understood the gap between simulations on the same scenario was because we took timing in real-time. The Kompics framework utilises simulation time so that our results may be affected by the actual load of the CPU.
 
 To solve this issue, we decided to implement a timer (with period 100ms) inside the AggregatorComponent which increments a variable accordingly to the time used by Kompics. Still, we don't obtain the real time but at least we get a consistent time.
+
+Additionally, we considered also the fact that the most of the system is deterministic, because we seed the random number generator always with the same value. On the contrary, the CroupierComponent is not deterministic as it provides different samples in every execution. Thus, some set of results might not match with the expected theoretical ones.
+
+\subsection{Experimentation results}
+
+In the following experimentations we focused mainly in finding boundary cases (between non convergence and convergence) and studying the variation of the performance varying both the infection time and the piggyback size.
+
+We are seeking for \emph{convergence} and we find two types of it, depending on the scenario. Convergence may mean either, in case of only alive nodes, the time used for the whole network to know every peer or, in case of dead nodes, the time elapsed to propagate the failures to all the alive nodes.
+
+In Figure \ref{allAliveNoKill} we present the results of a simulation with 300 peers, 250 of these were open whilst 50 were behind a NAT. We must notice that the minimum configuration to get convergence is ($\lambda=9$, ps\footnote{Piggyback size.}=60). We observed the lowest convergence time (52,926ms) for the configuration ($\lambda=10$, ps=70). For lower values of $\lambda$ or ps, the system took more time to converge because of the low propagation of the piggybacked information. The same effect appears also for too big values, this made us aware that there is an optimal configuration of these parameters.
+
+\begin{figure}
+\centering
+\includegraphics[scale=0.35]{metrics/allAliveNoKill.png}
+\caption{300 nodes without killing.}
+\label{allAliveNoKill}
+\end{figure}
+
+In Figure \ref{allAliveIndirect} we use the same setting of the previous scenario but we delete some of the connection between the peers of the overlay. As expected, nothing change but the performance. In fact, because of the indirect ping nodes take more time to reach the target of the ping.
+
+\begin{figure}
+\centering
+\includegraphics[scale=0.35]{metrics/allAliveIndirect.png}
+\caption{300 nodes with indirect ping.}
+\label{allAliveIndirect}
+\end{figure}
+
+In Figure \ref{allAliveFixedLamda} we measure the variation of the convergence time keeping a fixed value for $\lambda$ and varying the piggyback size. What we observed is that for big values of piggyback size we have better convergence time as the information are spread faster through the network.
+
+\begin{figure}
+\centering
+\includegraphics[scale=0.5]{metrics/allAliveFixedLamda.png}
+\caption{300 nodes $\lambda=10$.}
+\label{allAliveFixedLamda}
+\end{figure}
+
+The next experiment (Figure \ref{kill15Open}) includes 130 nodes. 100 of them are open and 30 are behind NATs. After 5 seconds we kill 15 open nodes and 8 NATed nodes. The results show two good convergence time and one much higher ($\lambda=22$, ps=40), this effect because the infection time is not well dimensioned according to the piggyback size and viceversa.
+
+\begin{figure}
+\centering
+\includegraphics[scale=0.5]{metrics/kill15Open.png}
+\caption{130 nodes with 23 kills.}
+\label{kill15Open}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[scale=0.5]{metrics/kill15OpenFixedLamda.png}
+\caption{130 nodes with 23 kills and $\lambda=24$.}
+\label{kill15OpenFixed}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[scale=0.5]{metrics/kill5Open.png}
+\caption{80 nodes with 17 kills.}
+\label{kill5Open}
+\end{figure}
 
 \section{Conclusion}
 
