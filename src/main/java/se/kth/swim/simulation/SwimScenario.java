@@ -61,6 +61,9 @@ public class SwimScenario {
 	private static long seed;
 	private static InetAddress localHost;
 	private static NumberNodeBuilder nodeBuilder;
+	private static final Integer INFECTION_TIME = 50;
+	private static final Integer PIGGYBACK_SIZE = 50;
+	
 	private static final Integer NUMBER_OF_TOTAL_NODES = 10;
 	private static final Integer NUMBER_OF_NAT_NODES = 3;
 	private static final Integer NUMBER_OF_OPEN_KILL = 3;
@@ -163,7 +166,7 @@ public class SwimScenario {
 					 */
 					long nodeSeed = seed + nodeId;
 					return new HostComp.HostInit(nodeAddress, bootstrapNodes,
-							aggregatorServer, nodeSeed, croupierConfig);
+							aggregatorServer, nodeSeed, croupierConfig, INFECTION_TIME, PIGGYBACK_SIZE);
 				}
 
 				public Integer getNodeId() {
@@ -207,7 +210,7 @@ public class SwimScenario {
 					 */
 					long nodeSeed = seed + nodeId;
 					return new HostComp.HostInit(nodeAddress, bootstrapNodes,
-							aggregatorServer, nodeSeed, croupierConfig);
+							aggregatorServer, nodeSeed, croupierConfig, INFECTION_TIME, PIGGYBACK_SIZE);
 				}
 
 				public Integer getNodeId() {
@@ -319,6 +322,8 @@ public class SwimScenario {
 						// raise(10, startNodeOp, new
 						// GenIntSequentialDistribution(
 						// new Integer[] {2, 3, 4, 5, 6, 7, 8, 9, 10, 11}));
+						
+						System.err.println("START!");
 						raise(nodeBuilder.getOpenNodes().size(),
 								startOpenNodeOp,
 								new GenIntSequentialDistribution(nodeBuilder
@@ -362,6 +367,7 @@ public class SwimScenario {
 					{
 						
 
+						System.err.println("END");
 						eventInterArrivalTime(constant(1000));
 						Integer[] openIdToKill = nodeBuilder.getOpenNodes().subList(0, NUMBER_OF_OPEN_KILL + 1).toArray(new Integer[NUMBER_OF_OPEN_KILL]);
 						Integer[] natIdToKill = nodeBuilder.getNatedNodes().subList(0, NUMBER_OF_NAT_KILL + 1).toArray(new Integer[NUMBER_OF_NAT_KILL]);

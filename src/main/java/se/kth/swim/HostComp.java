@@ -52,10 +52,15 @@ public class HostComp extends ComponentDefinition {
     private Component swim;
     private Component nat;
     private Component croupier;
+    
+    private final Integer infectionTime, piggybackSize;
 
     public HostComp(HostInit init) {
         this.selfAddress = init.selfAddress;
         log.info("{} initiating...", new Object[]{selfAddress});
+        
+        this.infectionTime = init.getInfectionTime();
+        this.piggybackSize = init.getPiggybackSize();
         
         subscribe(handleStart, control);
         subscribe(handleStop, control);
@@ -70,7 +75,7 @@ public class HostComp extends ComponentDefinition {
         connect(nat.getNegative(CroupierPort.class), croupier.getPositive(CroupierPort.class));
         connect(nat.getNegative(Timer.class), timer);
         
-        swim = create(SwimComp.class, new SwimComp.SwimInit(selfAddress, init.bootstrapNodes, init.aggregatorAddress, init.seed));
+        swim = create(SwimComp.class, new SwimComp.SwimInit(selfAddress, init.bootstrapNodes, init.aggregatorAddress, init.seed, infectionTime, piggybackSize));
         connect(swim.getNegative(Timer.class), timer);
         connect(swim.getNegative(Network.class), nat.getPositive(Network.class));
         connect(swim.getNegative(NatPort.class), nat.getPositive(NatPort.class));
@@ -100,13 +105,24 @@ public class HostComp extends ComponentDefinition {
         public final NatedAddress aggregatorAddress;
         public final long seed;
         public final CroupierConfig croupierConfig;
+        private final Integer infectionTime, piggybackSize;
 
-        public HostInit(NatedAddress selfAddress, Set<NatedAddress> bootstrapNodes, NatedAddress aggregatorAddress, long seed, CroupierConfig croupierConfig) {
+        public HostInit(NatedAddress selfAddress, Set<NatedAddress> bootstrapNodes, NatedAddress aggregatorAddress, long seed, CroupierConfig croupierConfig, Integer infectionTime, Integer piggybackSize) {
             this.selfAddress = selfAddress;
             this.bootstrapNodes = bootstrapNodes;
             this.aggregatorAddress = aggregatorAddress;
             this.seed = seed;
             this.croupierConfig = croupierConfig;
+            this.infectionTime = infectionTime;
+            this.piggybackSize = piggybackSize;
+        }
+        
+        public Integer getInfectionTime() {
+        	return infectionTime;
+        }
+        
+        public Integer getPiggybackSize() {
+        	return piggybackSize;
         }
     }
 }

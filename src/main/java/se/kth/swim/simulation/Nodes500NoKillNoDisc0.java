@@ -34,13 +34,16 @@ import se.sics.p2ptoolbox.util.network.NatedAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicNatedAddress;
 
-public class Nodes100NoKillNoDisc {
+public class Nodes500NoKillNoDisc0 {
 	private static long seed;
 	private static InetAddress localHost;
 	private static List<Integer> toKillNodesId;
 	private static NumberNodeBuilder nodeBuilder;
-	private static final Integer NUMBER_OF_TOTAL_NODES = 100;
-	private static final Integer NUMBER_OF_NAT_NODES = 0;
+	private static final Integer INFECTION_TIME = 42;
+	private static final Integer PIGGYBACK_SIZE = 200;
+	
+	private static final Integer NUMBER_OF_TOTAL_NODES = 500;
+	private static final Integer NUMBER_OF_NAT_NODES = 200;
 
 	private static CroupierConfig croupierConfig = new CroupierConfig(10, 5,
 			2000, 1000);
@@ -102,7 +105,7 @@ public class Nodes100NoKillNoDisc {
 					 */
 					long nodeSeed = seed + nodeId;
 					return new HostComp.HostInit(nodeAddress, bootstrapNodes,
-							aggregatorServer, nodeSeed, croupierConfig);
+							aggregatorServer, nodeSeed, croupierConfig, INFECTION_TIME, PIGGYBACK_SIZE);
 				}
 
 				public Integer getNodeId() {
@@ -146,7 +149,7 @@ public class Nodes100NoKillNoDisc {
 					 */
 					long nodeSeed = seed + nodeId;
 					return new HostComp.HostInit(nodeAddress, bootstrapNodes,
-							aggregatorServer, nodeSeed, croupierConfig);
+							aggregatorServer, nodeSeed, croupierConfig, INFECTION_TIME, PIGGYBACK_SIZE);
 				}
 
 				public Integer getNodeId() {
@@ -204,7 +207,7 @@ public class Nodes100NoKillNoDisc {
 	// distributions
 	// you can implement your own - by extending Distribution
 	public static SimulationScenario simpleBoot(final long seed) {
-		Nodes100NoKillNoDisc.seed = seed;
+		Nodes500NoKillNoDisc0.seed = seed;
 		nodeBuilder = new NumberNodeBuilder(NUMBER_OF_TOTAL_NODES,
 				NUMBER_OF_NAT_NODES);
 		SimulationScenario scen = new SimulationScenario() {
@@ -252,7 +255,7 @@ public class Nodes100NoKillNoDisc {
 				startPeers.startAfterTerminationOf(1000, startAggregator);
 				fetchSimulationResult.startAfterTerminationOf(30 * 1000,
 						startPeers);
-				terminateAfterTerminationOf(10000, fetchSimulationResult);
+				terminateAfterTerminationOf(10000000, fetchSimulationResult);
 
 			}
 		};

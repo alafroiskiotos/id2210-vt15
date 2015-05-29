@@ -24,18 +24,18 @@ import se.sics.p2ptoolbox.util.network.NatedAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicNatedAddress;
 
-public class Nodes85Nat20Kill12Nat5Open {
+public class Nodes200Nat60Kill20Nat20Open {
 	private static long seed;
 	private static InetAddress localHost;
 	private static NumberNodeBuilder nodeBuilder;
 	
 	private static final Integer INFECTION_TIME = 50;
-	private static final Integer PIGGYBACK_SIZE = 50;
+	private static final Integer PIGGYBACK_SIZE = 70;
 	
-	private static final Integer NUMBER_OF_TOTAL_NODES = 85;
-	private static final Integer NUMBER_OF_NAT_NODES = 20;
-	private static final Integer NUMBER_OF_NAT_KILL = 12;
-	private static final Integer NUMBER_OF_OPEN_KILL = 5;
+	private static final Integer NUMBER_OF_TOTAL_NODES = 200;
+	private static final Integer NUMBER_OF_NAT_NODES = 60;
+	private static final Integer NUMBER_OF_NAT_KILL = 20;
+	private static final Integer NUMBER_OF_OPEN_KILL = 20;
 	
 	private static Integer[] concatKillId;
 
@@ -188,7 +188,7 @@ public class Nodes85Nat20Kill12Nat5Open {
 	};
 	
 	public static SimulationScenario scenario(final long seed) {
-		Nodes85Nat20Kill12Nat5Open.seed = seed;
+		Nodes200Nat60Kill20Nat20Open.seed = seed;
 		nodeBuilder = new NumberNodeBuilder(NUMBER_OF_TOTAL_NODES,
 				NUMBER_OF_NAT_NODES);
 		SimulationScenario scen = new SimulationScenario() {
@@ -226,8 +226,10 @@ public class Nodes85Nat20Kill12Nat5Open {
 				
 				StochasticProcess killPeers = new StochasticProcess() {
 					{
+						
+
 						eventInterArrivalTime(constant(1000));
-						Integer[] openIdToKill = nodeBuilder.getOpenNodes().subList(20, 20 + NUMBER_OF_OPEN_KILL + 1).toArray(new Integer[NUMBER_OF_OPEN_KILL]);
+						Integer[] openIdToKill = nodeBuilder.getOpenNodes().subList(100, 100 + NUMBER_OF_OPEN_KILL + 1).toArray(new Integer[NUMBER_OF_OPEN_KILL]);
 						Integer[] natIdToKill = nodeBuilder.getNatedNodes().subList(0, NUMBER_OF_NAT_KILL + 1).toArray(new Integer[NUMBER_OF_NAT_KILL]);
 
 						raise(NUMBER_OF_OPEN_KILL, killNodeOp, new GenIntSequentialDistribution(openIdToKill));

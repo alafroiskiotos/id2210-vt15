@@ -54,11 +54,12 @@ public class AggregatorComp extends ComponentDefinition {
 	private final NatedAddress selfAddress;
 
 	private long start, killingTime;
-	private boolean printConvergence;
+	private boolean printConvergence, setStartTime;
 	private final Integer size;
 	private final Map<Integer, Status> snapshot;
 	private final Integer[] nodeToKill;
 	private Date now;
+	private Integer previousDeadNode;
 
 	public AggregatorComp(AggregatorInit init) {
 		this.selfAddress = init.selfAddress;
@@ -66,14 +67,14 @@ public class AggregatorComp extends ComponentDefinition {
 		this.nodeToKill = init.getKilled();
 		this.size = init.getSize();
 		this.printConvergence = true;
+		this.previousDeadNode = 0;
+		this.setStartTime = true;
 		
 		System.out.println("Total size: " + size);
 		System.out.println("nodetokill: " + nodeToKill.length);
 
 		// Init the timestamp for when the nodes will be killed
 		// Our assumption is that all the node will be killed at the same time
-		now = new Date();
-		this.start = now.getTime();
 
 		log.info("{} initiating...", new Object[] { selfAddress.getId() });
 
@@ -120,7 +121,18 @@ public class AggregatorComp extends ComponentDefinition {
 				log.info("CONVERGENCE in {} ms!", now.getTime() - start);
 			}*/
 			
-			if (snapshot.containsKey(status.getSource().getId()) && !status.getSource().getId().equals(1)) {
+			if (previousDeadNode.equals(0) && status.getContent().getDeadNodes() > 1 && nodeToKill.length > 0) {
+				now = new Date();
+				start = now.getTime();
+				previousDeadNode++;
+			} else if (setStartTime){
+				now = new Date();
+				start = now.getTime();
+				setStartTime = false;
+			}
+			
+			if (snapshot.containsKey(status.getSource().getId())
+					&& !Arrays.asList(nodeToKill).contains(status.getSource().getId())) {
 				if (checkCorrectness(status.getContent())) {
 					snapshot.replace(status.getSource().getId(), status.getContent());
 				} else {

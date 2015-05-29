@@ -68,8 +68,8 @@ public class SwimComp extends ComponentDefinition {
 
 	private static final Logger log = LoggerFactory.getLogger(SwimComp.class);
 	// λlogn times
-	private static final Integer INFECT_FACTOR = 50;
-	private static final Integer PIGGYBACK_SIZE = 60;
+	private final Integer INFECT_FACTOR;
+	private final Integer PIGGYBACK_SIZE;
 	private static final Integer INDIRECT_PING_SIZE = 2;
 	private Integer localSequenceNumber = 0;
 
@@ -96,6 +96,9 @@ public class SwimComp extends ComponentDefinition {
 		this.bootstrapNodes = init.bootstrapNodes;
 		this.aggregatorAddress = init.aggregatorAddress;
 		this.rand = new Random(init.getSeed());
+		this.INFECT_FACTOR = init.getInfectionTime();
+		this.PIGGYBACK_SIZE = init.getPiggybackSize();
+		
 		this.members = new ArrayList<>();
 		this.self = new Peer(selfAddress, NodeState.ALIVE);
 		selfMember = new Member(self);
@@ -645,18 +648,29 @@ public class SwimComp extends ComponentDefinition {
 		public final Set<NatedAddress> bootstrapNodes;
 		public final NatedAddress aggregatorAddress;
 		private final long seed;
+		private final Integer infectionTime, piggybackSize;
 
 		public SwimInit(NatedAddress selfAddress,
 				Set<NatedAddress> bootstrapNodes,
-				NatedAddress aggregatorAddress, long seed) {
+				NatedAddress aggregatorAddress, long seed, Integer infectionTime, Integer piggybackSize) {
 			this.selfAddress = selfAddress;
 			this.bootstrapNodes = bootstrapNodes;
 			this.aggregatorAddress = aggregatorAddress;
 			this.seed = seed;
+			this.infectionTime = infectionTime;
+			this.piggybackSize = piggybackSize;
 		}
 
 		public long getSeed() {
 			return seed;
+		}
+		
+		public Integer getInfectionTime() {
+			return infectionTime;
+		}
+		
+		public Integer getPiggybackSize() {
+			return piggybackSize;
 		}
 	}
 
