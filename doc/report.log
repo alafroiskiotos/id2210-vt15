@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.15 (TeX Live 2014) (preloaded format=pdflatex 2014.9.13)  29 MAY 2015 22:31
+This is pdfTeX, Version 3.14159265-2.6-1.40.15 (TeX Live 2014) (preloaded format=pdflatex 2014.9.13)  29 MAY 2015 22:48
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -199,54 +199,55 @@ Overfull \hbox (5.77585pt too wide) in paragraph at lines 89--90
  [][] 
  []
 
-<metrics/kill15OpenFixedLamda.png, id=17, 455.45157pt x 255.95625pt>
+[2 <./metrics/allAliveNoKill.png (PNG copy)> <./metrics/allAliveIndirect.png (P
+NG copy)>]
+<metrics/kill15OpenFixedLamda.png, id=24, 455.45157pt x 255.95625pt>
 File: metrics/kill15OpenFixedLamda.png Graphic file (type png)
 
 <use metrics/kill15OpenFixedLamda.png>
-Package pdftex.def Info: metrics/kill15OpenFixedLamda.png used on input line 96
+Package pdftex.def Info: metrics/kill15OpenFixedLamda.png used on input line 98
 .
 (pdftex.def)             Requested size: 227.72522pt x 127.9778pt.
 
-Overfull \hbox (5.77585pt too wide) in paragraph at lines 96--97
+Overfull \hbox (5.77585pt too wide) in paragraph at lines 98--99
  [][] 
  []
 
-<metrics/kill5Open.png, id=18, 455.45157pt x 255.95625pt>
+<metrics/kill5Open.png, id=25, 455.45157pt x 255.95625pt>
 File: metrics/kill5Open.png Graphic file (type png)
 
 <use metrics/kill5Open.png>
-Package pdftex.def Info: metrics/kill5Open.png used on input line 103.
+Package pdftex.def Info: metrics/kill5Open.png used on input line 107.
 (pdftex.def)             Requested size: 227.72522pt x 127.9778pt.
 
-Overfull \hbox (5.77585pt too wide) in paragraph at lines 103--104
+Overfull \hbox (5.77585pt too wide) in paragraph at lines 107--108
  [][] 
  []
 
-[2 <./metrics/allAliveNoKill.png (PNG copy)> <./metrics/allAliveIndirect.png (P
-NG copy)>] [3 <./metrics/allAliveFixedLamda.png (PNG copy)> <./metrics/kill15Op
-en.png (PNG copy)> <./metrics/kill15OpenFixedLamda.png (PNG copy)> <./metrics/k
-ill5Open.png (PNG copy)>] (./report.aux) ) 
+[3 <./metrics/allAliveFixedLamda.png (PNG copy)> <./metrics/kill15Open.png (PNG
+ copy)> <./metrics/kill15OpenFixedLamda.png (PNG copy)> <./metrics/kill5Open.pn
+g (PNG copy)>] (./report.aux) ) 
 Here is how much of TeX's memory you used:
  1554 strings out of 493117
  22898 string characters out of 6135433
- 84998 words of memory out of 5000000
+ 83998 words of memory out of 5000000
  5013 multiletter control sequences out of 15000+600000
  8101 words of font info for 29 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  37i,8n,23p,645b,240s stack positions out of 5000i,500n,10000p,200000b,80000s
-</usr/local/texlive/2014/texmf-dist/f
-onts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2014/texmf-dist/fo
-nts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2014/texmf-dist/fon
-ts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2014/texmf-dist/fonts
-/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2014/texmf-dist/fonts/t
-ype1/public/amsfonts/cm/cmr17.pfb></usr/local/texlive/2014/texmf-dist/fonts/typ
-e1/public/amsfonts/cm/cmr6.pfb></usr/local/texlive/2014/texmf-dist/fonts/type1/
-public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2014/texmf-dist/fonts/type1/pub
-lic/amsfonts/cm/cmr8.pfb></usr/local/texlive/2014/texmf-dist/fonts/type1/public
-/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2014/texmf-dist/fonts/type1/public/
-amsfonts/cm/cmti10.pfb></usr/local/texlive/2014/texmf-dist/fonts/type1/public/a
-msfonts/cm/cmtt10.pfb>
-Output written on report.pdf (3 pages, 204062 bytes).
+</usr/local/texlive/2014/texmf-dist/fonts/type1/
+public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2014/texmf-dist/fonts/type1/p
+ublic/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2014/texmf-dist/fonts/type1/pu
+blic/amsfonts/cm/cmr10.pfb></usr/local/texlive/2014/texmf-dist/fonts/type1/publ
+ic/amsfonts/cm/cmr12.pfb></usr/local/texlive/2014/texmf-dist/fonts/type1/public
+/amsfonts/cm/cmr17.pfb></usr/local/texlive/2014/texmf-dist/fonts/type1/public/a
+msfonts/cm/cmr6.pfb></usr/local/texlive/2014/texmf-dist/fonts/type1/public/amsf
+onts/cm/cmr7.pfb></usr/local/texlive/2014/texmf-dist/fonts/type1/public/amsfont
+s/cm/cmr8.pfb></usr/local/texlive/2014/texmf-dist/fonts/type1/public/amsfonts/c
+m/cmsy10.pfb></usr/local/texlive/2014/texmf-dist/fonts/type1/public/amsfonts/cm
+/cmti10.pfb></usr/local/texlive/2014/texmf-dist/fonts/type1/public/amsfonts/cm/
+cmtt10.pfb>
+Output written on report.pdf (3 pages, 205499 bytes).
 PDF statistics:
  64 PDF objects out of 1000 (max. 8388607)
  41 compressed objects within 1 object stream

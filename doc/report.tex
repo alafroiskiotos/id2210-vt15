@@ -82,7 +82,7 @@ In Figure \ref{allAliveFixedLamda} we measure the variation of the convergence t
 \label{allAliveFixedLamda}
 \end{figure}
 
-The next experiment (Figure \ref{kill15Open}) includes 130 nodes. 100 of them are open and 30 are behind NATs. After 5 seconds we kill 15 open nodes and 8 NATed nodes. The results show two good convergence time and one much higher ($\lambda=22$, ps=40), this effect because the infection time is not well dimensioned according to the piggyback size and viceversa.
+The next experiment (Figure \ref{kill15Open}) includes 130 nodes. 100 of them are open and 30 are behind NATs. After 5 seconds we kill 15 open nodes and 8 NATed nodes. The results show two good convergence time and one much higher ($\lambda=22$, ps=40), this effect because the infection time is not well dimensioned according to the piggyback size and viceversa. This experiment is quite hard to converge because it might happen that parents of NATed nodes die consecutively.
 
 \begin{figure}
 \centering
@@ -91,12 +91,16 @@ The next experiment (Figure \ref{kill15Open}) includes 130 nodes. 100 of them ar
 \label{kill15Open}
 \end{figure}
 
+Figure \ref{kill15OpenFixed} we execute the same experiment previously discussed but we keep a constant value $\lambda=24$. In this case the results are very good as we can observe that the convergence time is inversely proportional to the piggyback size. To put it in other words, the performance is better when we piggyback more information at the same time.
+
 \begin{figure}
 \centering
 \includegraphics[scale=0.5]{metrics/kill15OpenFixedLamda.png}
 \caption{130 nodes with 23 kills and $\lambda=24$.}
 \label{kill15OpenFixed}
 \end{figure}
+
+The last experiment we report here (Figure \ref{kill5Open}) we have 80 nodes (60 open and 20 NATed). After 3 seconds we kill 5 open peers and 12 NATed peers, for a total of 17. Here we keep a fixed value for ps=40 and we vary $\lambda$. We observe a strange climax in the convergence time nearly 100000ms as we expected a value lower then for $\lambda=6$. Except for this value, the global trend of the performance matches the expected results.
 
 \begin{figure}
 \centering
