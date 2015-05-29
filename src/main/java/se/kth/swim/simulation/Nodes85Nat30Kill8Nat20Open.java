@@ -29,8 +29,8 @@ public class Nodes85Nat30Kill8Nat20Open {
 	private static InetAddress localHost;
 	private static NumberNodeBuilder nodeBuilder;
 	
-	private static final Integer INFECTION_TIME = 115;
-	private static final Integer PIGGYBACK_SIZE = 40;
+	private static final Integer INFECTION_TIME = 120;
+	private static final Integer PIGGYBACK_SIZE = 80;
 	
 	private static final Integer NUMBER_OF_TOTAL_NODES = 130;
 	private static final Integer NUMBER_OF_NAT_NODES = 30;

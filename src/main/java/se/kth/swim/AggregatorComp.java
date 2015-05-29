@@ -78,7 +78,7 @@ public class AggregatorComp extends ComponentDefinition {
 		this.ownTimer = 0;
 
 		System.out.println("Total size: " + size);
-		System.out.println("nodetokill: " + nodeToKill.length);
+		//System.out.println("nodetokill: " + nodeToKill.length);
 
 		// Init the timestamp for when the nodes will be killed
 		// Our assumption is that all the node will be killed at the same time
