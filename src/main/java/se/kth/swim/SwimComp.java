@@ -132,6 +132,8 @@ public class SwimComp extends ComponentDefinition {
 		public void handle(Start event) {
 			log.info("{} starting...", new Object[] { selfAddress.getId() });
 
+      // Every time it starts, the infection time is incremented so that 
+      // when other peers get its info, they update their membership list.
 			self.setIncarnation(self.getIncarnation() + 1);
 
 			if (!bootstrapNodes.isEmpty()) {
@@ -460,19 +462,23 @@ public class SwimComp extends ComponentDefinition {
 			log.info("{} sending status to aggregator:{}", new Object[] {
 					selfAddress.getId(), aggregatorAddress });
 
+      // Returns the number of all the alive nodes of the membership list.
 			int alive = (int) members
 					.stream()
 					.filter(x -> x.getPeer().getState().equals(NodeState.ALIVE))
 					.count();
 
+      // Returns the number of all the dead nodes of the membership list.
 			int dead = (int) members.stream()
 					.filter(x -> x.getPeer().getState().equals(NodeState.DEAD))
 					.count();
 			
+      // Returns the number of all the suspected nodes of the membership list.
 			int suspected = (int) members.stream()
 					.filter(x -> x.getPeer().getState().equals(NodeState.SUSPECTED))
 					.count();
 
+      // Send the message with the updated status to the aggregator component
 			trigger(new NetStatus(selfAddress, aggregatorAddress, new Status(
 					receivedPings, dead, alive, suspected)), network);
 		}
