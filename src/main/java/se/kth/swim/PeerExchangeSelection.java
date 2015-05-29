@@ -23,6 +23,13 @@ public class PeerExchangeSelection {
 		return ret;
 	}
 
+  /**
+   * Merges the received piggybacked information with the membership list.
+   * @param self Peer that invokes the merge operation.
+   * @param localView Membership list of the peer.
+   * @param receivedView View received in the piggybacked information.
+   * @return The new merged membership list.
+   */
 	public static List<Member> merge(Peer self, List<Member> localView,
 			List<Peer> receivedView) {
 		
@@ -36,11 +43,7 @@ public class PeerExchangeSelection {
 			if (x.equals(self)) {
 				// If the state is different and the incarnation less or
 				// equal...
-				if (!x.getState().equals(NodeState.ALIVE) /*
-														 * && x.getIncarnation()
-														 * <=
-														 * self.getIncarnation()
-														 */) {
+				if (!x.getState().equals(NodeState.ALIVE)) {
 					// ... we reset the infection (so we spread fresher info)
 					// and increase the incarnation
 					self.setState(NodeState.ALIVE);
@@ -54,8 +57,6 @@ public class PeerExchangeSelection {
 				Peer peer = listViewPeers.get(listViewPeers.indexOf(x));
 				Member tmpPeer;
 				if (x.getState().equals(NodeState.ALIVE)
-						/*&& (peer.getState().equals(NodeState.SUSPECTED) || peer
-								.getState().equals(NodeState.ALIVE))*/
 						&& x.getIncarnation() > peer.getIncarnation()) {
 					// ...
 					tmpPeer = new Member(x);
@@ -131,6 +132,11 @@ public class PeerExchangeSelection {
 				.collect(Collectors.toList());
 	}
 
+  /**
+   * Returns the sorting policy to get members with lowest ping time
+   * @param members The membership list
+   * @return Integer number.
+   */
 	private static Integer getMinimumPinged(List<Member> members) {
 
 		Collections.sort(members, new Comparator<Member>() {

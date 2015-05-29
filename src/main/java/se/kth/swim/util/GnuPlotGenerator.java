@@ -16,35 +16,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+package se.kth.swim.util;
 
-package se.kth.swim.msg;
+import java.util.List;
+import se.kth.swim.msg.Status;
 
 /**
- * @author Alex Ormenisan <aaor@sics.se>
+ *
+ * @author lorenzocorneo
  */
-public class Status {
-  private final Integer receivedPings, deadNodes, aliveNodes, suspectedNodes;
-
-  public Status(Integer receivedPings, Integer deadNodes, Integer aliveNodes, Integer suspectedNodes) {
-      this.receivedPings = receivedPings;
-      this.deadNodes = deadNodes;
-      this.aliveNodes = aliveNodes;
-      this.suspectedNodes = suspectedNodes;
-  }
-
-  public Integer getReceivedPings() {
-    return receivedPings;
-  }
-
-  public Integer getDeadNodes() {
-    return deadNodes;
-  }
-
-  public Integer getAliveNodes() {
-    return aliveNodes;
+public class GnuPlotGenerator {
+  private List<Status> list;
+  public GnuPlotGenerator(List<Status> list) {
+    this.list = list;
   }
   
-  public Integer getSuspectedNodes() {
-	  return suspectedNodes;
+  public String generate() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("Ping\t\tAlive\t\tDead");
+    list.forEach(x -> sb.append(x.toString()).append("\n"));
+    return sb.toString();
   }
 }
