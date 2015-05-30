@@ -43,11 +43,11 @@ public class SwimMain {
          * When testing you code, you might want to run the scenario with different seeds.
          */
         //LauncherComp.scenario = SwimScenario.simpleBoot(1234L);
-        //LauncherComp.scenario = Nodes300NoKillNoDisc0.simpleBoot(1234L);
+        //LauncherComp.scenario = Nodes300Nat50NoKillNoDisc.scenario(1234L);
+        //LauncherComp.scenario = Nodes300NAT50Deadlinks30.scenario(1234L);
         //LauncherComp.scenario = Nodes85Nat20Kill12Nat5Open.scenario(1234L);
-        //LauncherComp.scenario = Nodes200Nat60Kill20Nat20Open.scenario(1234L);
-        //LauncherComp.scenario = Nodes85Nat30Kill8Nat20Open.scenario(1234L);
-        LauncherComp.scenario = Nodes200NAT50Deadlinks30.scenario(1234L);
+        //LauncherComp.scenario = Nodes300Nat30Kill8Nat15Open.scenario(1234L);
+        LauncherComp.scenario = Nodes85Nat20Kill12Nat5Open.scenario(1234L);
         
         try {
             LauncherComp.simulatorClientAddress = new BasicNatedAddress(new BasicAddress(InetAddress.getByName("127.0.0.1"), 30000, -1));

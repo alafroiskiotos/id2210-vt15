@@ -141,7 +141,7 @@ public class SwimComp extends ComponentDefinition {
 				// Add bootstrap nodes to local membership list
 				for (NatedAddress node : bootstrapNodes) {
 					members.add(new Member(new Peer(node, NodeState.ALIVE)));
-					log.info("{} my bootstrap node: {}", selfAddress.getId(),
+					log.debug("{} my bootstrap node: {}", selfAddress.getId(),
 							node);
 				}
 				schedulePeriodicPing();
@@ -176,12 +176,12 @@ public class SwimComp extends ComponentDefinition {
 			if (isCausalOrNew(event.getSource().getId(), event.getContent()
 					.getCounter())) {
 
-				log.info("{} received PING from:{}, {}", new Object[] {
+				log.debug("{} received PING from:{}, {}", new Object[] {
 						selfAddress.getId(), event.getHeader().getSource() });
 
 				receivedPings++;
 
-				log.info("{} Partial view received: {}", selfAddress.getId(),
+				log.debug("{} Partial view received: {}", selfAddress.getId(),
 						event.getContent().getPiggyback());
 
 				// Create piggyback view. Sort local view with infection
@@ -198,9 +198,9 @@ public class SwimComp extends ComponentDefinition {
 				members = PeerExchangeSelection.merge(self, members,
 						receivedView);
 
-				log.info("{} Local membership list after PING merging: {}",
+				log.debug("{} Local membership list after PING merging: {}",
 						selfAddress.getId(), members);
-				log.info("{} Respond with PONG to {} with view: {}",
+				log.debug("{} Respond with PONG to {} with view: {}",
 						new Object[] { selfAddress.getId(),
 								event.getSource().getId(), piggyback });
 
@@ -225,7 +225,7 @@ public class SwimComp extends ComponentDefinition {
 			if (isCausalOrNew(event.getSource().getId(), event.getContent()
 					.getCounter())) {
 				
-				log.info("{} received PONG from: {} Partial view received {}",
+				log.debug("{} received PONG from: {} Partial view received {}",
 						new Object[] { selfAddress.getId(), event.getSource(),
 								event.getContent().getView() });
 				
@@ -237,7 +237,7 @@ public class SwimComp extends ComponentDefinition {
 				members = PeerExchangeSelection.merge(self, members, event
 						.getContent().getView());
 
-				log.info("{} Local after PONG MERGED membership list: {}",
+				log.debug("{} Local after PONG MERGED membership list: {}",
 						selfAddress.getId(), members);
 			}
 		}
@@ -274,7 +274,7 @@ public class SwimComp extends ComponentDefinition {
 				// Increments the infection time of the piggybacked node's
 				PeerExchangeSelection.updateInfectionTime(members, piggyback);
 
-				log.info("{} sending PING to node: {}. View Sending: {}",
+				log.debug("{} sending PING to node: {}. View Sending: {}",
 						new Object[] { selfAddress.getId(),
 								pingPeer.getPeer().getNode(), piggyback });
 
@@ -295,7 +295,7 @@ public class SwimComp extends ComponentDefinition {
 
 		@Override
 		public void handle(PingFailureTimeout event) {
-			log.info("{} Did NOT received pong message from: {}", selfAddress,
+			log.debug("{} Did NOT received pong message from: {}", selfAddress,
 					event.getPeer());
 
 			// Find the node that did not respond to our PING, in our local view
@@ -325,7 +325,7 @@ public class SwimComp extends ComponentDefinition {
 				}
 			}
 
-			log.info("{} membership list after PING FAILURE TIMEOUT: {}",
+			log.debug("{} membership list after PING FAILURE TIMEOUT: {}",
 					new Object[] { selfAddress.getId(), members });
 		}
 	};
@@ -340,7 +340,7 @@ public class SwimComp extends ComponentDefinition {
 
 			if (isCausalOrNew(event.getSource().getId(), event.getContent()
 					.getCounter())) {
-				log.info("Node {} received NetStartIndirectPing for suspected {}",
+				log.debug("Node {} received NetStartIndirectPing for suspected {}",
 						selfAddress.getId(), event.getContent().getSuspectedPeer());
 
 				localSequenceNumber++;
@@ -408,7 +408,7 @@ public class SwimComp extends ComponentDefinition {
 
 			if (isCausalOrNew(event.getSource().getId(), event.getContent()
 					.getCounter())) {
-				log.info("Node {} received STOP INDIRECT PING for node {}",
+				log.debug("Node {} received STOP INDIRECT PING for node {}",
 						new Object[] { selfAddress.getId(),
 								event.getContent().getSuspectedPeer() });
 				
@@ -439,7 +439,7 @@ public class SwimComp extends ComponentDefinition {
 
 		@Override
 		public void handle(DeadTimeout event) {
-			log.info("Node {} declared peer DEAD with timeout ID {}",
+			log.debug("Node {} declared peer DEAD with timeout ID {}",
 					new Object[] { selfAddress.getId(), event.getTimeoutId() });
 
 			// Find that node in our view
@@ -459,7 +459,7 @@ public class SwimComp extends ComponentDefinition {
 	private final Handler<StatusTimeout> handleStatusTimeout = new Handler<StatusTimeout>() {
 		@Override
 		public void handle(StatusTimeout event) {
-			log.info("{} sending status to aggregator:{}", new Object[] {
+			log.debug("{} sending status to aggregator:{}", new Object[] {
 					selfAddress.getId(), aggregatorAddress });
 
       // Returns the number of all the alive nodes of the membership list.
@@ -508,7 +508,7 @@ public class SwimComp extends ComponentDefinition {
 			event.getParents().forEach(x -> sb.append(",").append(x.getId()));
 			sb.append("}");
 
-			log.info("Node {} requires check for {}", new Object[] {
+			log.debug("Node {} requires check for {}", new Object[] {
 					selfAddress.getId(), sb.toString() });
 
 			// Respond to NAT traversal component
@@ -558,7 +558,7 @@ public class SwimComp extends ComponentDefinition {
 	 * @return The unique ID of that timeout
 	 */
 	private UUID schedulePingTimeout(Peer destination) {
-		log.info("{} Setting PING FD timeout for node: {}", selfAddress,
+		log.debug("{} Setting PING FD timeout for node: {}", selfAddress,
 				destination);
 		ScheduleTimeout st = new ScheduleTimeout(1200);
 		PingFailureTimeout pft = new PingFailureTimeout(st, destination);
@@ -574,7 +574,7 @@ public class SwimComp extends ComponentDefinition {
 	 * @return The unique ID of that timeout
 	 */
 	private UUID scheduleDeadTimeout(Peer destination) {
-		log.info("{} Setting DEAD timeout for node: {}", selfAddress,
+		log.debug("{} Setting DEAD timeout for node: {}", selfAddress,
 				destination);
 		ScheduleTimeout st = new ScheduleTimeout(2500);
 		DeadTimeout dt = new DeadTimeout(st, destination);
@@ -590,7 +590,7 @@ public class SwimComp extends ComponentDefinition {
 	 * @param The source address for the node
 	 */
 	private void cancelPingTimeout(UUID pingTimeoutUUID, NatedAddress source) {
-		log.info("{} Canceling PING FD timeout for node: {} with ID: {}",
+		log.debug("{} Canceling PING FD timeout for node: {} with ID: {}",
 				new Object[] { selfAddress, source, pingTimeoutUUID });
 		CancelTimeout ct = new CancelTimeout(pingTimeoutUUID);
 		trigger(ct, timer);
@@ -602,7 +602,7 @@ public class SwimComp extends ComponentDefinition {
 	 * @param Source address of the suspected node
 	 */
 	private void cancelDeadTimeout(UUID deadTimeoutUUID, NatedAddress source) {
-		log.info("{} Canceling DEAD timeout for node: {} with ID: {}",
+		log.debug("{} Canceling DEAD timeout for node: {} with ID: {}",
 				new Object[] { selfAddress, source, deadTimeoutUUID });
 		CancelTimeout ct = new CancelTimeout(deadTimeoutUUID);
 		trigger(ct, timer);

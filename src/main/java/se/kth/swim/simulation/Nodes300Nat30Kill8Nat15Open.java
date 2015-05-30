@@ -24,7 +24,7 @@ import se.sics.p2ptoolbox.util.network.NatedAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicNatedAddress;
 
-public class Nodes85Nat30Kill8Nat20Open {
+public class Nodes300Nat30Kill8Nat15Open {
 	private static long seed;
 	private static InetAddress localHost;
 	private static NumberNodeBuilder nodeBuilder;
@@ -188,7 +188,7 @@ public class Nodes85Nat30Kill8Nat20Open {
 	};
 	
 	public static SimulationScenario scenario(final long seed) {
-		Nodes85Nat30Kill8Nat20Open.seed = seed;
+		Nodes300Nat30Kill8Nat15Open.seed = seed;
 		nodeBuilder = new NumberNodeBuilder(NUMBER_OF_TOTAL_NODES,
 				NUMBER_OF_NAT_NODES);
 		SimulationScenario scen = new SimulationScenario() {

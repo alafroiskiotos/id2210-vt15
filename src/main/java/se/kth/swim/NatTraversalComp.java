@@ -118,7 +118,7 @@ public class NatTraversalComp extends ComponentDefinition {
 		public void handle(Start event) {
 			log.info("{} starting...", new Object[] { selfAddress.getId() });
 			if (!selfAddress.isOpen()) {
-				log.info("Node {} setting periodic NAT Heartbeat",
+				log.debug("Node {} setting periodic NAT Heartbeat",
 						selfAddress.getId());
 				heartBeatTimout = schedulePeriodicHB();
 			}
@@ -140,7 +140,7 @@ public class NatTraversalComp extends ComponentDefinition {
 
 		@Override
 		public void handle(NetMsg<Object> msg) {
-			log.trace("{} received msg:{}", new Object[] { selfAddress.getId(),
+			log.debug("{} received msg:{}", new Object[] { selfAddress.getId(),
 					msg });
 			Header<NatedAddress> header = msg.getHeader();
 			if (header instanceof SourceHeader) {
@@ -151,14 +151,14 @@ public class NatTraversalComp extends ComponentDefinition {
 				SourceHeader<NatedAddress> sourceHeader = (SourceHeader<NatedAddress>) header;
 				if (sourceHeader.getActualDestination().getParents()
 						.contains(selfAddress)) {
-					log.info("{} relaying message for:{}", new Object[] {
+					log.debug("{} relaying message for:{}", new Object[] {
 							selfAddress.getId(), sourceHeader.getSource() });
 					RelayHeader<NatedAddress> relayHeader = sourceHeader
 							.getRelayHeader();
 					trigger(msg.copyMessage(relayHeader), network);
 					return;
 				} else {
-					log.warn(
+					log.debug(
 							"{} received weird relay message:{} - dropping it",
 							new Object[] { selfAddress.getId(), msg });
 					return;
@@ -178,7 +178,7 @@ public class NatTraversalComp extends ComponentDefinition {
 				trigger(msg.copyMessage(originalHeader), local);
 				return;
 			} else {
-				log.info(
+				log.debug(
 						"{} delivering direct message:{} from:{}",
 						new Object[] { selfAddress.getId(), msg,
 								header.getSource() });
@@ -230,7 +230,7 @@ public class NatTraversalComp extends ComponentDefinition {
 				// Schedule failure timeout and trigger NATPing
 				UUID hbTimeout = scheduleParentFailureTimeout(x);
 				sentHeartBeats.add(hbTimeout);
-				log.info(
+				log.debug(
 						"Node {} sending NatPing and setting timeout for node {}",
 						new Object[] { selfAddress.getId(), x.getId() });
 				trigger(new NetNatPing(selfAddress, x, hbTimeout), network);
@@ -244,7 +244,7 @@ public class NatTraversalComp extends ComponentDefinition {
 	private final Handler<NetNatPing> handleNatPing = new Handler<NetNatPing>() {
 		@Override
 		public void handle(NetNatPing event) {
-			log.info("Node {} received NatPing from node {}, responding...",
+			log.debug("Node {} received NatPing from node {}, responding...",
 					new Object[] { selfAddress.getId(),
 							event.getSource().getId() });
 			// Respond to ping
@@ -259,7 +259,7 @@ public class NatTraversalComp extends ComponentDefinition {
 	private final Handler<NetNatPong> handleNatPong = new Handler<NetNatPong>() {
 		@Override
 		public void handle(NetNatPong event) {
-			log.info(
+			log.debug(
 					"Node {} received NatPong from node {}, canceling timeout!",
 					new Object[] { selfAddress.getId(),
 							event.getSource().getId() });
@@ -279,7 +279,7 @@ public class NatTraversalComp extends ComponentDefinition {
 	private final Handler<ParentFailureTimeout> handleParentFailure = new Handler<ParentFailureTimeout>() {
 		@Override
 		public void handle(ParentFailureTimeout event) {
-			log.info(
+			log.debug(
 					"Node {}, parent {} is DEAD!",
 					new Object[] { selfAddress.getId(), event.getPeer().getId() });
 			if (sample.size() > 1) {
@@ -299,7 +299,7 @@ public class NatTraversalComp extends ComponentDefinition {
 			
       trigger(new NatRequest(newParents), nat);
 			} else {
-				log.info("Node {} received empty sample from Croupier, will try later...", selfAddress.getId());
+				log.debug("Node {} received empty sample from Croupier, will try later...", selfAddress.getId());
 			}
 		}
 	};
@@ -320,7 +320,7 @@ public class NatTraversalComp extends ComponentDefinition {
       event.getParents().forEach(x -> sb.append(x.getId()).append(","));
       sb.append("}");
       
-      log.info("Node {} new parents are: {}", selfAddress.getId(), selfAddress.getParents());
+      log.debug("Node {} new parents are: {}", selfAddress.getId(), selfAddress.getParents());
       
       trigger(new NatUpdate(selfAddress), nat);
     }
@@ -329,10 +329,10 @@ public class NatTraversalComp extends ComponentDefinition {
 	private Handler handleCroupierSample = new Handler<CroupierSample>() {
 		@Override
 		public void handle(CroupierSample event) {
-			log.info("{} croupier public nodes:{}", selfAddress.getBaseAdr(),
+			log.debug("{} croupier public nodes:{}", selfAddress.getBaseAdr(),
 					event.publicSample);
 			// use this to change parent in case it died
-			log.info("Node {} RECEIVED CROUPIER SAMPLE!!!", selfAddress.getId());
+			log.debug("Node {} RECEIVED CROUPIER SAMPLE!!!", selfAddress.getId());
 			sample.clear();
 
 			Iterator<Container<NatedAddress, Object>> iter = event.publicSample

@@ -29,7 +29,7 @@ public class Nodes85Nat20Kill12Nat5Open {
 	private static InetAddress localHost;
 	private static NumberNodeBuilder nodeBuilder;
 	
-	private static final Integer INFECTION_TIME = 55;
+	private static final Integer INFECTION_TIME = 65;
 	private static final Integer PIGGYBACK_SIZE = 70;
 	
 	private static final Integer NUMBER_OF_TOTAL_NODES = 85;

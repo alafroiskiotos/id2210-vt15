@@ -34,7 +34,7 @@ import se.sics.p2ptoolbox.util.network.NatedAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicNatedAddress;
 
-public class Nodes300NoKillNoDisc0 {
+public class Nodes300Nat50NoKillNoDisc {
 	private static long seed;
 	private static InetAddress localHost;
 	private static NumberNodeBuilder nodeBuilder;
@@ -205,8 +205,8 @@ public class Nodes300NoKillNoDisc0 {
 	// check se.sics.p2ptoolbox.simulator.dsl.distribution for more
 	// distributions
 	// you can implement your own - by extending Distribution
-	public static SimulationScenario simpleBoot(final long seed) {
-		Nodes300NoKillNoDisc0.seed = seed;
+	public static SimulationScenario scenario (final long seed) {
+		Nodes300Nat50NoKillNoDisc.seed = seed;
 		nodeBuilder = new NumberNodeBuilder(NUMBER_OF_TOTAL_NODES,
 				NUMBER_OF_NAT_NODES);
 		SimulationScenario scen = new SimulationScenario() {

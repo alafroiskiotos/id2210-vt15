@@ -2,18 +2,25 @@ package se.kth.swim.simulation;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.List;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+
+import org.javatuples.Pair;
 
 import se.kth.swim.AggregatorComp;
 import se.kth.swim.HostComp;
 import se.kth.swim.croupier.CroupierConfig;
 import se.kth.swim.scenario.NumberNodeBuilder;
 import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
-import se.sics.p2ptoolbox.simulator.cmd.impl.KillNodeCmd;
+import se.sics.p2ptoolbox.simulator.cmd.impl.ChangeNetworkModelCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.SimulationResult;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartAggregatorCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
+import se.sics.p2ptoolbox.simulator.core.network.NetworkModel;
+import se.sics.p2ptoolbox.simulator.core.network.impl.DeadLinkNetworkModel;
+import se.sics.p2ptoolbox.simulator.core.network.impl.UniformRandomModel;
 import se.sics.p2ptoolbox.simulator.dsl.SimulationScenario;
 import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation;
 import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation1;
@@ -24,20 +31,23 @@ import se.sics.p2ptoolbox.util.network.NatedAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicNatedAddress;
 
-public class Nodes200Nat60Kill20Nat20Open {
+public class Nodes300NAT50Deadlinks30 {
 	private static long seed;
 	private static InetAddress localHost;
 	private static NumberNodeBuilder nodeBuilder;
-	
-	private static final Integer INFECTION_TIME = 50;
-	private static final Integer PIGGYBACK_SIZE = 70;
-	
-	private static final Integer NUMBER_OF_TOTAL_NODES = 200;
-	private static final Integer NUMBER_OF_NAT_NODES = 60;
-	private static final Integer NUMBER_OF_NAT_KILL = 20;
-	private static final Integer NUMBER_OF_OPEN_KILL = 20;
-	
+
+	private static final Integer INFECTION_TIME = 84;
+	private static final Integer PIGGYBACK_SIZE = 100;
+
+	private static final Integer NUMBER_OF_TOTAL_NODES = 250;
+	private static final Integer NUMBER_OF_NAT_NODES = 50;
+	private static final Integer NUMBER_OF_NAT_KILL = 0;
+	private static final Integer NUMBER_OF_OPEN_KILL = 0;
+	private static Set<Pair<Integer, Integer>> deadLinks;
+
 	private static Integer[] concatKillId;
+
+	private static final Map<Integer, Set<Pair<Integer, Integer>>> deadLinksSets = new HashMap<Integer, Set<Pair<Integer, Integer>>>();
 
 	private static CroupierConfig croupierConfig = new CroupierConfig(10, 5,
 			2000, 1000);
@@ -65,7 +75,7 @@ public class Nodes200Nat60Kill20Nat20Open {
 
 					// Initialize here the dead nodes!
 					return new AggregatorComp.AggregatorInit(aggregatorAddress,
-							nodeBuilder.getSize(), concatKillId, 5000);
+							nodeBuilder.getSize(), new Integer[0], 5000);
 				}
 
 				public NatedAddress getAddress() {
@@ -99,7 +109,8 @@ public class Nodes200Nat60Kill20Nat20Open {
 					 */
 					long nodeSeed = seed + nodeId;
 					return new HostComp.HostInit(nodeAddress, bootstrapNodes,
-							aggregatorServer, nodeSeed, croupierConfig, INFECTION_TIME, PIGGYBACK_SIZE);
+							aggregatorServer, nodeSeed, croupierConfig,
+							INFECTION_TIME, PIGGYBACK_SIZE);
 				}
 
 				public Integer getNodeId() {
@@ -143,7 +154,8 @@ public class Nodes200Nat60Kill20Nat20Open {
 					 */
 					long nodeSeed = seed + nodeId;
 					return new HostComp.HostInit(nodeAddress, bootstrapNodes,
-							aggregatorServer, nodeSeed, croupierConfig, INFECTION_TIME, PIGGYBACK_SIZE);
+							aggregatorServer, nodeSeed, croupierConfig,
+							INFECTION_TIME, PIGGYBACK_SIZE);
 				}
 
 				public Integer getNodeId() {
@@ -161,17 +173,15 @@ public class Nodes200Nat60Kill20Nat20Open {
 			};
 		}
 	};
+	
+	static Operation1<ChangeNetworkModelCmd, Integer> deadLinksNMOp = new Operation1<ChangeNetworkModelCmd, Integer>() {
 
-	static Operation1<KillNodeCmd, Integer> killNodeOp = new Operation1<KillNodeCmd, Integer>() {
-
-		public KillNodeCmd generate(final Integer nodeId) {
-			return new KillNodeCmd() {
-				public Integer getNodeId() {
-					return nodeId;
-				}
-			};
+		public ChangeNetworkModelCmd generate(Integer setIndex) {
+			NetworkModel baseNetworkModel = new UniformRandomModel(50, 500);
+			NetworkModel compositeNetworkModel = new DeadLinkNetworkModel(
+					setIndex, baseNetworkModel, deadLinksSets.get(setIndex));
+			return new ChangeNetworkModelCmd(compositeNetworkModel);
 		}
-
 	};
 
 	static Operation<SimulationResult> simulationResult = new Operation<SimulationResult>() {
@@ -186,11 +196,22 @@ public class Nodes200Nat60Kill20Nat20Open {
 			};
 		}
 	};
-	
+
 	public static SimulationScenario scenario(final long seed) {
-		Nodes200Nat60Kill20Nat20Open.seed = seed;
+		Nodes300NAT50Deadlinks30.seed = seed;
 		nodeBuilder = new NumberNodeBuilder(NUMBER_OF_TOTAL_NODES,
 				NUMBER_OF_NAT_NODES);
+		Integer[] deadCounter = new Integer[30];
+
+		for (int i = 0; i < 30; i++) {
+			deadCounter[i] = i;
+			deadLinks = new HashSet<Pair<Integer, Integer>>();
+
+			deadLinks.add(Pair.with(i, i + 10));
+			deadLinks.add(Pair.with(i + 10, i));
+			deadLinksSets.put(i, deadLinks);
+		}
+
 		SimulationScenario scen = new SimulationScenario() {
 			{
 				StochasticProcess startAggregator = new StochasticProcess() {
@@ -204,7 +225,7 @@ public class Nodes200Nat60Kill20Nat20Open {
 				StochasticProcess startPeers = new StochasticProcess() {
 					{
 						eventInterArrivalTime(constant(1000));
-						
+
 						raise(nodeBuilder.getOpenNodes().size(),
 								startOpenNodeOp,
 								new GenIntSequentialDistribution(
@@ -214,31 +235,17 @@ public class Nodes200Nat60Kill20Nat20Open {
 																.getOpenNodes()
 																.size()])));
 
-						
 						if (nodeBuilder.getNatedNodes().size() > 0) {
-							raise(nodeBuilder.getNatedNodes().size(),startNatNodeOp,
-									new GenIntSequentialDistribution(nodeBuilder.getNatedNodes()
-													.toArray(new Integer[nodeBuilder
-													          .getNatedNodes().size()])));
+							raise(nodeBuilder.getNatedNodes().size(),
+									startNatNodeOp,
+									new GenIntSequentialDistribution(
+											nodeBuilder
+													.getNatedNodes()
+													.toArray(
+															new Integer[nodeBuilder
+																	.getNatedNodes()
+																	.size()])));
 						}
-					}
-				};
-				
-				StochasticProcess killPeers = new StochasticProcess() {
-					{
-						
-
-						eventInterArrivalTime(constant(1000));
-						Integer[] openIdToKill = nodeBuilder.getOpenNodes().subList(100, 100 + NUMBER_OF_OPEN_KILL + 1).toArray(new Integer[NUMBER_OF_OPEN_KILL]);
-						Integer[] natIdToKill = nodeBuilder.getNatedNodes().subList(0, NUMBER_OF_NAT_KILL + 1).toArray(new Integer[NUMBER_OF_NAT_KILL]);
-
-						raise(NUMBER_OF_OPEN_KILL, killNodeOp, new GenIntSequentialDistribution(openIdToKill));
-						raise(NUMBER_OF_NAT_KILL, killNodeOp, new GenIntSequentialDistribution(natIdToKill));
-						
-						concatKillId = new Integer[NUMBER_OF_OPEN_KILL + NUMBER_OF_NAT_KILL];
-						
-						System.arraycopy(openIdToKill, 0, concatKillId, 0, NUMBER_OF_OPEN_KILL);
-						System.arraycopy(natIdToKill, 0, concatKillId, NUMBER_OF_OPEN_KILL, NUMBER_OF_NAT_KILL);
 					}
 				};
 
@@ -248,13 +255,20 @@ public class Nodes200Nat60Kill20Nat20Open {
 						raise(1, simulationResult);
 					}
 				};
+				
+				StochasticProcess deadLinks = new StochasticProcess() {
+					{
+						eventInterArrivalTime(constant(1000));
+						raise(30, deadLinksNMOp, new GenIntSequentialDistribution(deadCounter));
+					}
+				};
 
 				startAggregator.start();
 				startPeers.startAfterTerminationOf(1000, startAggregator);
-				killPeers.startAfterTerminationOf(3000, startPeers);
-				fetchSimulationResult.startAfterTerminationOf(300 * 1000,
+				deadLinks.startAfterTerminationOf(1000, startPeers);
+				fetchSimulationResult.startAfterTerminationOf(700 * 1000,
 						startPeers);
-				terminateAfterTerminationOf(80000, fetchSimulationResult);
+				terminateAfterTerminationOf(8000000, fetchSimulationResult);
 
 			}
 		};
